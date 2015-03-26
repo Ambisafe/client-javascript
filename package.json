@@ -1,0 +1,16 @@
+{
+  "name": "ambisafe-client",
+  "version": "1.0.0",
+  "description": "Client library for Ambisafe cryptocurrency server",
+  "main": "ambisafe.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@bitbucket.org:ambisafe/client-javascript.git"
+  },
+  "author": "Andrey Zamovskiy",
+  "license": "ALSA",
+  "private": true
+}
