@@ -16,6 +16,7 @@
   "dependencies": {
     "bigi": "^1.4.0",
     "binstring": "^0.2.1",
+    "bitcoinjs-lib": "^1.5.6",
     "btc-opcode": "0.0.1",
     "btc-script": "^0.1.12",
     "btc-transaction": "^0.1.8",
