@@ -19,14 +19,13 @@
                 var privateKeyWIF = $('#privateKeyWIF').val().trim()
                 var txHex = $('#transactionHex').val().trim()
                 key = BitcoinJs.ECKey.fromWIF(privateKeyWIF)
+//                console.log("signing key address: " + key.pub.getAddress().toString())
                 tx = BitcoinJs.Transaction.fromHex(txHex) // creating extra signatures here
                 console.log(key)
                 console.log(tx)
                 var txb = BitcoinJs.TransactionBuilder.fromTransaction(tx)
                 console.log(txb)
                 txb.inputs[0].hashType = BitcoinJs.Transaction.SIGHASH_ALL
-//                txb.inputs[0].signatures.splice(3,2)
-//                console.log(txb.inputs[0].signatures)
                 txb.sign(0, key, txb.inputs[0].redeemScript, BitcoinJs.Transaction.SIGHASH_ALL)
                 $('#result').val(txb.buildIncomplete().toHex())
             });

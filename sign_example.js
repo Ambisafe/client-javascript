@@ -6307,7 +6307,7 @@ function extractInput (txIn) {
     redeemScript = Script.fromBuffer(scriptSig.chunks.slice(-1)[0])
     prevOutScript = scripts.scriptHashOutput(redeemScript.getHash())
 
-    scriptSig = Script.fromChunks(scriptSig.chunks.slice(0, -1))
+    scriptSig = Script.fromChunks(scriptSig.chunks.slice(0, -1)) // empty
     scriptType = scripts.classifyInput(scriptSig, true)
   } else {
     scriptType = prevOutType
@@ -6394,7 +6394,7 @@ TransactionBuilder.fromTransaction = function (transaction) {
     txb.addOutput(txOut.script, txOut.value)
   })
 
-  // Extract/add signatures
+  //Extract/add signatures
   txb.inputs = transaction.ins.map(function (txIn) {
     // TODO: remove me after testcase added
     assert(!Transaction.isCoinbaseHash(txIn.hash), 'coinbase inputs not supported')
@@ -6402,7 +6402,12 @@ TransactionBuilder.fromTransaction = function (transaction) {
     // Ignore empty scripts
     if (txIn.script.buffer.length === 0) return {}
 
-    return extractInput(txIn)
+    result = extractInput(txIn)
+    //console.debug(extractInput(txIn))
+    //console.log(extractInput(txIn))
+    //console.log(result)
+    return result
+
   })
 
   return txb
@@ -6656,28 +6661,29 @@ TransactionBuilder.prototype.sign = function (index, privKey, redeemScript, hash
   var signatureHash = this.tx.hashForSignature(index, signatureScript, hashType)
 
   // enforce signature order matches public keys
-  if (input.scriptType === 'multisig' && input.redeemScript && input.signatures.length !== input.pubKeys.length) {
-    // maintain a local copy of unmatched signatures
-    var unmatched = input.signatures.slice()
-
-    input.signatures = input.pubKeys.map(function (pubKey) {
-      var match
-
-      // check for any matching signatures
-      unmatched.some(function (signature, i) {
-        if (!signature) return false
-        if (!pubKey.verify(signatureHash, signature)) return false
-        match = signature
-
-        // remove matched signature from unmatched
-        unmatched.splice(i, 1)
-
-        return true
-      })
-
-      return match || undefined
-    })
-  }
+  //if (input.scriptType === 'multisig' && input.redeemScript && input.signatures.length !== input.pubKeys.length) {
+  //  // maintain a local copy of unmatched signatures
+  //  var unmatched = input.signatures.slice()
+  //
+  //  input.signatures = input.pubKeys.map(function (pubKey) { /// << --- 3 sigs transformed to 5 here!!!!!
+  //    var match
+  //
+  //    // check for any matching signatures
+  //    unmatched.some(function (signature, i) {
+  //      if (!signature) return false
+  //      if (!pubKey.verify(signatureHash, signature)) return false
+  //      match = signature
+  //
+  //      // remove matched signature from unmatched
+  //      unmatched.splice(i, 1)
+  //
+  //      return true
+  //    })
+  //
+  //    return match || undefined
+  //  })
+  //  // todo: reduce number of blank signatures to the required minimum.
+  //}
 
   // enforce in order signing of public keys
   assert(input.pubKeys.some(function (pubKey, i) {
