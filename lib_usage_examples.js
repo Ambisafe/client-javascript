@@ -8,7 +8,7 @@ var Ambisafe = require('ambisafe')
 // this supposed to happen after user have filled registration form and clicked submit
 account = Ambisafe.generateAccount(salt, currency, password)
 container = account.toString() // Returns JSON as single string. Resulting object should be transmitted to server & passed to server side SDK
-jQuery.find('#ambisafeContainer').val(container) // setting value to hidden input
+jQuery.find('#walletContainer').val(container) // setting value to hidden input
 // the rest is done on server side. We don't need username and other details here.
 
 
