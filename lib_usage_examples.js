@@ -30,3 +30,10 @@ signedTransactionHex = account.signTransaction(currency, unsignedTransactionHex)
 // 4. signed hex should be submitted to server for co-signing and broadcasting
 
 
+// EXAMPLE 3: change password (different from recovery because old user container decryption key is still known)
+account = new Ambisafe.Account(containerJsonAsString, password)
+account.setNewPassword(new_encryption_key)
+container = account.toString() // Returns JSON as single string. Resulting object should be transmitted to server & passed to server side SDK
+jQuery.find('#walletContainer').val(container) // setting value to hidden input
+
+
