@@ -7,8 +7,8 @@ var Ambisafe = require('ambisafe')
 // EXAMPLE 1: create account & save:
 // this supposed to happen after user have filled registration form and clicked submit
 account = Ambisafe.generateAccount(salt, currency, password)
-container = account.toString() // Returns JSON as single string. Resulting object should be transmitted to server & passed to server side SDK
-jQuery.find('#walletContainer').val(container) // setting value to hidden input
+accountSerialized = account.toString() // Returns JSON as single string. Resulting object should be transmitted to server & passed to server side SDK
+jQuery.find('#walletContainer').val(accountSerialized) // setting value to hidden input
 // the rest is done on server side. We don't need username and other details here.
 
 
@@ -33,7 +33,7 @@ signedTransactionHex = account.signTransaction(currency, unsignedTransactionHex)
 // EXAMPLE 3: change password (different from recovery because old user container decryption key is still known)
 account = new Ambisafe.Account(containerJsonAsString, password)
 account.setNewPassword(new_encryption_key)
-container = account.toString() // Returns JSON as single string. Resulting object should be transmitted to server & passed to server side SDK
-jQuery.find('#walletContainer').val(container) // setting value to hidden input
+accountSerialized = account.toString() // Returns JSON as single string. Resulting object should be transmitted to server & passed to server side SDK
+jQuery.find('#walletContainer').val(accountSerialized) // setting value to hidden input
 
 
