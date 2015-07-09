@@ -18,20 +18,21 @@ jQuery.find('#walletContainer').val(accountSerialized) // setting value to hidde
 // The most optimal way to fetch it depends client application and therefore delegated to it
 
 // 1. decrypting account with private key
-// container json as it returned by Server + password, entered during authentication. Password should never be transmitted to server
+// account json as it returned by Server + password, entered during authentication. Password should never be transmitted to server
 // Exception can be thrown here if password is incorrect
-account = new Ambisafe.Account(containerJsonAsString, password)
+account = new Ambisafe.Account(accountJsonAsString, password)
 
 
 // 2. constructing transaction & validating against business logic rules
 // like with account, creation and validation of transaction is out of scope of this library
 // 3. signing transaction with customer key
-signedTransactionHex = account.signTransaction(currency, unsignedTransactionHex);
-// 4. signed hex should be submitted to server for co-signing and broadcasting
+signedTransaction = account.signTransaction(currency, transaction);
+jQuery.find('#signedtransaction').val(transaction.toJson()) // setting value to hidden input
+// 4. signed transaction should be submitted to server for co-signing and broadcasting
 
 
 // EXAMPLE 3: change password (different from recovery because old user container decryption key is still known)
-account = new Ambisafe.Account(containerJsonAsString, password)
+account = new Ambisafe.Account(accountJsonAsString, password)
 account.setNewPassword(new_encryption_key)
 accountSerialized = account.toString() // Returns JSON as single string. Resulting object should be transmitted to server & passed to server side SDK
 jQuery.find('#walletContainer').val(accountSerialized) // setting value to hidden input
