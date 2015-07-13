@@ -1,0 +1,9 @@
+{
+	"name": "ambisafe-client-javascript",
+	"main": "app.js",
+	"dependencies": {
+		"crypto-pbkdf2": "latest",
+		"node-cryptojs-aes": "latest",
+		"bitcoinjs-lib": "latest"
+	}
+}
