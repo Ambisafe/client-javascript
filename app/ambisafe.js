@@ -23,6 +23,7 @@
  * @file ambisafe.js
  * Ambisafe class used to define the functions of the library
  * @author Charlie Fontana <charlie@ambisafe.co>
+ * @date 07/13/2015
  * @version 0.1
  */
 
@@ -89,20 +90,20 @@ Ambisafe.generateAccount = function(currency, password, salt) {
  * @return {string} return iterations and salt together as one string ({hex-iterations}.{base64-salt})
  */
 Ambisafe.generateSalt = function(explicitIterations) {
-	var bytes, iterations, defaultHashIterations = 4000;
+	var bytes, iterations;
 
 	bytes = pbkdf2.lib.WordArray.random(192/8);
-	iterations = (explicitIterations || defaultHashIterations).toString(16);
+	iterations = explicitIterations.toString(16);
 
 	return iterations + "." + bytes.toString(pbkdf2.enc.Base64);
 };
 
 /**
- * Derives a key from an arbitrary string
+ * Derives a key from a password
  *
  * @param {string} password
+ * @param {string} salt
  * @param {number} depth
- * @param {string} depth
  * @return {object} return an object that indicates the key and the used salt value. 
  */
 Ambisafe.deriveKey = function(password, salt, depth) {
@@ -133,8 +134,8 @@ Ambisafe.deriveKey = function(password, salt, depth) {
  * encrypt an input based on the Advanced Encryption Standard (AES)
  *
  * @param {string} input
- * @param {string} derivedKey: {key: '..', salt: '..'}
- * @return {object} JSON object: {"ct":"..","iv":"..","s":".."}
+ * @param {string} derivedKey: {key:'..', salt:'..'}
+ * @return {object} JSON object: {ct:'..', iv:'..', s:'..'}
  */
 Ambisafe.encrypt = function(input, derivedKey) {
 	var cryptoJS, encrypted;
@@ -151,8 +152,8 @@ Ambisafe.encrypt = function(input, derivedKey) {
 /**
  * decrypt an input based on the Advanced Encryption Standard (AES)
  *
- * @param {object} JSON object: {"ct":"..","iv":"..","s":".."}
- * @param {string} derivedKey: {key: '..', salt: '..'}
+ * @param {object} JSON object: {ct:'..', iv:'..', s:'..'}
+ * @param {string} derivedKey:  {key:'..', salt:'..'}
  * @return {string} decrypted text
  */
 Ambisafe.decrypt = function(encryptedInput, derivedKey) {
