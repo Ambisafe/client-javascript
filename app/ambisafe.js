@@ -76,7 +76,12 @@ Ambisafe.generateAccount = function(currency, password, salt) {
 	account.set('key', key);
 	account.set('password', password);
 
+	if (currency) {
+		account.set('currency', currency);
+	}
+
 	keyWif = bitcoin.ECKey.makeRandom().toWIF();
+	account.set('privatekey', keyWif);
 	account.set('data', Ambisafe.encrypt(keyWif, key));
 
 	return account;

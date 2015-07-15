@@ -28,6 +28,12 @@
  */
 
 /**
+ * This section defines the required libraries
+ */
+var crypto = require('crypto'),
+	bitcoin = require('bitcoinjs-lib');
+
+/**
  * Defines the Account constructor.
  *
  * @param {string} containerJsonAsString.
@@ -36,12 +42,13 @@
  */
 var Account = function (containerJsonAsString, password) {
 
+	//TODO Review the "containerJsonAsString" content. 
 	if (containerJsonAsString) {
-		this.data.containerJsonAsString = containerJsonAsString;
+		this.set('containerJsonAsString', containerJsonAsString);
 	}
 	
 	if (password) {
-		this.data.password = password;
+		this.set('password', password);
 	}
 };
 
@@ -51,22 +58,40 @@ var Account = function (containerJsonAsString, password) {
 Account.prototype.data = {};
 
 /**
- * Defines the signTransaction function.
+ * Instance method that signs a transaction.
  *
  * @param {string} currency.
- * @param {object} unsigned transaction.
+ * @param {object} unsigned transaction: {hex:'...', fee:'...', sighashes:['...', '...']}
  * @return {object} signed transaction.
  */
 Account.prototype.signTransaction = function (currency, tx) {
-	//TODO implement it.
+	var keyPair, sign,
+		pkey = this.get('privatekey');
 
+	if (!(tx.sighashes) || !(tx.sighashes instanceof Array)) {
+		console.log('ERR: The "sighashes" attribute is required.');
+		return;
+	}
+
+	//TODO review it. the currency was set in the generateAccount method.
 	this.set('currency', currency);
+
+	tx.user_signature = [];
+	tx.operator_signatures = [];
+
+	tx.sighashes.forEach(function(sighash) {
+		keyPair = bitcoin.ECKey.fromWIF(pkey);
+		sign = bitcoin.Message.sign(keyPair, sighash).toString('base64');
+		tx.user_signature.push(sign);
+
+		//TODO implement the operator signatures
+	});
 
 	return tx;
 };
 
 /**
- * Defines the "get" functions based on the attribute name.
+ * Instance method that gets the value of an indicated attribute.
  *
  * @param {string} attribute name.
  * @return {object} return the value of the indicated attribute.
@@ -76,7 +101,7 @@ Account.prototype.get = function (name) {
 };
 
 /**
- * Defines the "set" functions.
+ * Instance method that sets the value of an indicated attribute.
  *
  * @param {string} attribute name.
  * @param {object} attribute value.
@@ -87,13 +112,14 @@ Account.prototype.set = function (name, value) {
 };
 
 /**
- * Defines the "toString" function.
+ * Intance method that returns the Account's data in a JSON format
  *
  * @param none.
- * @return {string} return the account data as string
+ * @return {string} return the account data as string. 
+ *                  {'salt':'...','...':'currency','data':'{'ct':'...','iv':'...','s':'...'}'}
  */
 Account.prototype.toString = function () {
-	return this.data;
+	return JSON.stringify(this.data);
 };
 
 /**
