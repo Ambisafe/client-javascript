@@ -36,9 +36,6 @@ var bitcoin = require('bitcoinjs-lib'),
 
 /**
  * Defines the Ambisafe constructor.
- *
- * @param none.
- * @return none.
  */
 var Ambisafe = function () {
 
@@ -49,12 +46,16 @@ var Ambisafe = function () {
  */
 Ambisafe.currency = {};
 Ambisafe.currency.BITCOIN = 'btc';
+
 /**
- * 
+ * Defines the Ambisafe.Account class based on the ./account.js file.
+ * It was solved in this way to prevent the conflict between the "Account" class and another customer class.
  */
 Ambisafe.Account = require('./account.js');
+
 /**
- * Defines the static signTransaction function.
+ * Static method that creates an account and save it. 
+ * This supposed to happen after user have filled registration form and clicked submit.
  *
  * @param {string} currency as string
  * @param {string} password as string
@@ -64,7 +65,6 @@ Ambisafe.Account = require('./account.js');
 Ambisafe.generateAccount = function(currency, password, salt) {
 	var account, key, keyWif;
 
-	//handle this situation
 	if (!password || !password) {
 		console.log('ERR: currency and password are required.');
 		return;
@@ -73,7 +73,7 @@ Ambisafe.generateAccount = function(currency, password, salt) {
 	key = Ambisafe.deriveKey(password, salt);
 
 	account = new Ambisafe.Account();
-	account.set('salt', key.salt);
+	account.set('key', key);
 	account.set('password', password);
 
 	keyWif = bitcoin.ECKey.makeRandom().toWIF();
@@ -83,8 +83,7 @@ Ambisafe.generateAccount = function(currency, password, salt) {
 };
 
 /**
- * Convenience wrapper to grab a new salt value.
- * Treat this value as opaque, as it captures iterations.
+ * Static method that grabs a new salt value.
  *
  * @param {number} explicitIterations An integer
  * @return {string} return iterations and salt together as one string ({hex-iterations}.{base64-salt})
@@ -95,19 +94,19 @@ Ambisafe.generateSalt = function(explicitIterations) {
 	bytes = pbkdf2.lib.WordArray.random(192/8);
 	iterations = explicitIterations.toString(16);
 
-	return iterations + "." + bytes.toString(pbkdf2.enc.Base64);
+	return iterations + '.' + bytes.toString(pbkdf2.enc.Base64);
 };
 
 /**
- * Derives a key from a password
+ * Static method that derives a key from a password
  *
  * @param {string} password
  * @param {string} salt
  * @param {number} depth
- * @return {object} return an object that indicates the key and the used salt value. 
+ * @return {string} key
  */
 Ambisafe.deriveKey = function(password, salt, depth) {
-	var key, derivedKey = {};
+	var key;
 
 	if (!depth) {
 		depth = 1000;
@@ -120,48 +119,44 @@ Ambisafe.deriveKey = function(password, salt, depth) {
 	key = pbkdf2.PBKDF2(
 		password,
 		salt,
-		{ "keySize": 768/32, "iterations": depth }
+		{ 'keySize': 256/32, 'iterations': depth }
 	);
 
-	derivedKey = {};
-	derivedKey.key = key.toString();
-	derivedKey.salt = salt;
-
-	return derivedKey;
+	return key.toString();
 };
 
 /**
- * encrypt an input based on the Advanced Encryption Standard (AES)
+ * Static method that encrypts an input based on the Advanced Encryption Standard (AES)
  *
  * @param {string} input
- * @param {string} derivedKey: {key:'..', salt:'..'}
+ * @param {string} key
  * @return {object} JSON object: {ct:'..', iv:'..', s:'..'}
  */
-Ambisafe.encrypt = function(input, derivedKey) {
+Ambisafe.encrypt = function(input, key) {
 	var cryptoJS, encrypted;
 
 	cryptoJS = cryptoAES.CryptoJS;
 
-	encrypted = cryptoJS.AES.encrypt(input, derivedKey.key, {
+	encrypted = cryptoJS.AES.encrypt(input, key, {
 		format: cryptoAES.JsonFormatter
 	});
-	console.log(encrypted.toString());
+
 	return encrypted.toString();
 };
 
 /**
- * decrypt an input based on the Advanced Encryption Standard (AES)
+ * Static method decrypts an input based on the Advanced Encryption Standard (AES)
  *
  * @param {object} JSON object: {ct:'..', iv:'..', s:'..'}
- * @param {string} derivedKey:  {key:'..', salt:'..'}
+ * @param {string} key
  * @return {string} decrypted text
  */
-Ambisafe.decrypt = function(encryptedInput, derivedKey) {
+Ambisafe.decrypt = function(encryptedInput, key) {
 	var cryptoJS, decrypted;
 
 	cryptoJS = cryptoAES.CryptoJS;
 
-	decrypted = cryptoJS.AES.decrypt(encryptedInput, derivedKey.key, {
+	decrypted = cryptoJS.AES.decrypt(encryptedInput, key, {
 		format: cryptoAES.JsonFormatter
 	});
 
