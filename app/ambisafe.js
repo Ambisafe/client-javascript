@@ -48,10 +48,10 @@ Ambisafe.currency = {};
 Ambisafe.currency.BITCOIN = 'btc';
 
 /**
- * Defines the Ambisafe.Account class based on the ./account.js file.
+ * Defines the Ambisafe.Account class based on the ./account/account.js file.
  * It was solved in this way to prevent the conflict between the "Account" class and another customer class.
  */
-Ambisafe.Account = require('./account.js');
+Ambisafe.Account = require('./account/account.js');
 
 /**
  * Static method that creates an account and save it. 
