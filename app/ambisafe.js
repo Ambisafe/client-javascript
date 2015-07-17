@@ -32,6 +32,7 @@
  */
 var bitcoin = require('bitcoinjs-lib'),
 	pbkdf2 = require('crypto-PBKDF2'),
+	crypto = require('crypto'),
 	cryptoAES = require('node-cryptojs-aes');
 
 /**
@@ -45,7 +46,7 @@ var Ambisafe = function () {
  * Defines the static constants
  */
 Ambisafe.currency = {};
-Ambisafe.currency.BITCOIN = 'btc';
+Ambisafe.currency.BITCOIN = 'BTC';
 
 /**
  * Defines the Ambisafe.Account class based on the ./account/account.js file.
@@ -65,7 +66,7 @@ Ambisafe.Account = require('./account/account.js');
 Ambisafe.generateAccount = function(currency, password, salt) {
 	var account, key, keyWif;
 
-	if (!password || !password) {
+	if (!currency || !password) {
 		console.log('ERR: currency and password are required.');
 		return;
 	}
@@ -150,7 +151,7 @@ Ambisafe.encrypt = function(input, key) {
 };
 
 /**
- * Static method decrypts an input based on the Advanced Encryption Standard (AES)
+ * Static method that decrypts an input based on the Advanced Encryption Standard (AES)
  *
  * @param {object} JSON object: {ct:'..', iv:'..', s:'..'}
  * @param {string} key
@@ -166,6 +167,20 @@ Ambisafe.decrypt = function(encryptedInput, key) {
 	});
 
 	return cryptoJS.enc.Utf8.stringify(decrypted);
+};
+
+/**
+ * Static method that gets the SHA1 hash of a string
+ *
+ * @param {string} input
+ * @return {string} SHA1 hash
+ */
+Ambisafe.SHA1 = function(input) {
+	var shasum = crypto.createHash('sha1');
+
+	shasum.update(input);
+
+	return shasum.digest('hex');
 };
 
 /**
