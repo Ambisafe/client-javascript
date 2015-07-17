@@ -64,11 +64,15 @@ Ambisafe.Account = require('./account/account.js');
  * @return {Ambisafe.Account} return the generated account object
  */
 Ambisafe.generateAccount = function(currency, password, salt) {
-	var account, key, keyWif;
+	var account, key, eckey;
 
 	if (!currency || !password) {
 		console.log('ERR: currency and password are required.');
 		return;
+	}
+
+	if (!salt) {
+		salt = Ambisafe.generateSalt();
 	}
 
 	key = Ambisafe.deriveKey(password, salt);
@@ -76,14 +80,17 @@ Ambisafe.generateAccount = function(currency, password, salt) {
 	account = new Ambisafe.Account();
 	account.set('key', key);
 	account.set('password', password);
+	account.set('salt', salt);
 
 	if (currency) {
 		account.set('currency', currency);
 	}
 
-	keyWif = bitcoin.ECKey.makeRandom().toWIF();
-	account.set('privatekey', keyWif);
-	account.set('data', Ambisafe.encrypt(keyWif, key));
+	eckey = bitcoin.ECKey.makeRandom();
+	account.set('privatekey', eckey.toWIF());
+	account.set('publickey', eckey.pub.toHex());
+
+	account.set('data', Ambisafe.encrypt(account.get('privatekey'), key));
 
 	return account;
 };
@@ -96,6 +103,10 @@ Ambisafe.generateAccount = function(currency, password, salt) {
  */
 Ambisafe.generateSalt = function(explicitIterations) {
 	var bytes, iterations;
+
+	if (!explicitIterations) {
+		explicitIterations = 1000;
+	}
 
 	bytes = pbkdf2.lib.WordArray.random(192/8);
 	iterations = explicitIterations.toString(16);
@@ -116,10 +127,6 @@ Ambisafe.deriveKey = function(password, salt, depth) {
 
 	if (!depth) {
 		depth = 1000;
-	}
-
-	if (!salt) {
-		salt = Ambisafe.generateSalt(depth);
 	}
 
 	key = pbkdf2.PBKDF2(
