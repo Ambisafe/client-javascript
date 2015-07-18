@@ -32,8 +32,7 @@
  */
 var bitcoin = require('bitcoinjs-lib'),
 	pbkdf2 = require('crypto-PBKDF2'),
-	crypto = require('crypto'),
-	cryptoAES = require('node-cryptojs-aes');
+	crypto = require('crypto');
 
 /**
  * Defines the Ambisafe constructor.
@@ -64,7 +63,7 @@ Ambisafe.Account = require('./account/account.js');
  * @return {Ambisafe.Account} return the generated account object
  */
 Ambisafe.generateAccount = function(currency, password, salt) {
-	var account, key, eckey;
+	var account, key, eckey, iv;
 
 	if (!currency || !password) {
 		console.log('ERR: currency and password are required.');
@@ -90,7 +89,14 @@ Ambisafe.generateAccount = function(currency, password, salt) {
 	account.set('privatekey', eckey.toWIF());
 	account.set('publickey', eckey.pub.toHex());
 
-	account.set('data', Ambisafe.encrypt(account.get('privatekey'), key));
+	iv = Ambisafe.generateRandomValue(16);
+	account.set('iv', iv);
+
+	account.set('data', Ambisafe.encrypt(
+		account.get('privatekey'),
+		iv, 
+		key)
+	);
 
 	return account;
 };
@@ -115,6 +121,25 @@ Ambisafe.generateSalt = function(explicitIterations) {
 };
 
 /**
+ * Static method that generates random values 
+ *
+ * @param {number} length An integer
+ * @return {string} return random value 
+ */
+Ambisafe.generateRandomValue = function(length) {
+	var randomBytes, randomBytesHex;
+
+	if (!length) {
+		length = 256/16;
+	}
+
+	randomBytes = crypto.randomBytes(Math.ceil(length/2));
+	randomBytesHex = randomBytes.toString('hex');
+
+	return randomBytesHex.slice(0, length);
+};
+
+/**
  * Static method that derives a key from a password
  *
  * @param {string} password
@@ -132,7 +157,7 @@ Ambisafe.deriveKey = function(password, salt, depth) {
 	key = pbkdf2.PBKDF2(
 		password,
 		salt,
-		{ 'keySize': 256/32, 'iterations': depth }
+		{ 'keySize': 256/64, 'iterations': depth }
 	);
 
 	return key.toString();
@@ -141,39 +166,46 @@ Ambisafe.deriveKey = function(password, salt, depth) {
 /**
  * Static method that encrypts an input based on the Advanced Encryption Standard (AES)
  *
- * @param {string} input
- * @param {string} key
- * @return {object} JSON object: {ct:'..', iv:'..', s:'..'}
+ * @param {string} cleardata
+ * @param {string} iv
+ * @param {string} cryptkey
+ * @return {string} encrypted data
  */
-Ambisafe.encrypt = function(input, key) {
-	var cryptoJS, encrypted;
+Ambisafe.encrypt = function(cleardata, iv, cryptkey) {
+	var encipher, encryptData, encodeEncryptData, bufferCryptKey;
 
-	cryptoJS = cryptoAES.CryptoJS;
+	bufferCryptKey = new Buffer(cryptkey);
 
-	encrypted = cryptoJS.AES.encrypt(input, key, {
-		format: cryptoAES.JsonFormatter
-	});
+	encipher = crypto.createCipheriv('aes-256-cbc', bufferCryptKey, iv);
+	encryptData  = encipher.update(cleardata, 'utf8', 'binary');
 
-	return encrypted.toString();
+	encryptData += encipher.final('binary');
+	encodeEncryptData = new Buffer(encryptData, 'binary').toString('base64');
+
+	return encodeEncryptData;
 };
 
 /**
  * Static method that decrypts an input based on the Advanced Encryption Standard (AES)
  *
- * @param {object} JSON object: {ct:'..', iv:'..', s:'..'}
- * @param {string} key
+ * @param {string} encryptdata
+ * @param {string} iv 
+ * @param {string} cryptkey
  * @return {string} decrypted text
  */
-Ambisafe.decrypt = function(encryptedInput, key) {
-	var cryptoJS, decrypted;
+Ambisafe.decrypt = function(encryptdata, iv, cryptkey) {
+	var decipher, decoded, bufferCryptKey;
 
-	cryptoJS = cryptoAES.CryptoJS;
+	bufferCryptKey = new Buffer(cryptkey);
 
-	decrypted = cryptoJS.AES.decrypt(encryptedInput, key, {
-		format: cryptoAES.JsonFormatter
-	});
+	encryptdata = new Buffer(encryptdata, 'base64').toString('binary');
 
-	return cryptoJS.enc.Utf8.stringify(decrypted);
+	decipher = crypto.createDecipheriv('aes-256-cbc', bufferCryptKey, iv);
+	decoded  = decipher.update(encryptdata, 'binary', 'utf8');
+
+	decoded += decipher.final('utf8');
+
+	return decoded;
 };
 
 /**
