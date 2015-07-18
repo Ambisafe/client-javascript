@@ -66,7 +66,7 @@ Ambisafe.generateAccount = function(currency, password, salt) {
 	var account, key, eckey, iv;
 
 	if (!currency || !password) {
-		console.log('ERR: currency and password are required.');
+		console.log('ERR: currency and password are required');
 		return;
 	}
 
@@ -86,8 +86,8 @@ Ambisafe.generateAccount = function(currency, password, salt) {
 	}
 
 	eckey = bitcoin.ECKey.makeRandom();
-	account.set('privatekey', eckey.toWIF());
-	account.set('publickey', eckey.pub.toHex());
+	account.set('privateKey', eckey.toWIF());
+	account.set('publicKey', eckey.pub.toHex());
 
 	iv = Ambisafe.generateRandomValue(16);
 	account.set('iv', iv);

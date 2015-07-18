@@ -36,19 +36,42 @@ var crypto = require('crypto'),
 /**
  * Defines the Account constructor.
  *
- * @param {string} containerJsonAsString.
+ * @param {string} containerJson.
  * @param {string} password.
  * @return none.
  */
-var Account = function (containerJsonAsString, password) {
+var Account = function (containerJson, password) {
+	var accountData, userData;
 
-	//TODO Review the "containerJsonAsString" content. 
-	if (containerJsonAsString) {
-		this.set('containerJsonAsString', containerJsonAsString);
-	}
-	
 	if (password) {
 		this.set('password', password);
+	}
+
+	if (typeof containerJson !== 'string') {
+		console.log('ERR: expect parameter 1 to be string');
+		return;
+	}
+
+	try {
+		accountData = JSON.parse(containerJson);
+	} catch(e){
+		console.log('ERR: invalid JSON');
+		return;
+	}
+
+	if (accountData.containers === undefined || accountData.containers.USER === undefined) {
+		console.log('ERR: containers.USER is not defined');
+		return;
+	}
+
+	userData = accountData.containers.USER;
+
+	delete userData.role;
+
+	for (var property in userData) {
+		if (userData.hasOwnProperty(property)) {
+			this.set(property, userData[property]);
+		}
 	}
 };
 
@@ -56,39 +79,6 @@ var Account = function (containerJsonAsString, password) {
  * Defines the instance data object used to store the Account data.
  */
 Account.prototype.data = {};
-
-/**
- * Instance method that signs a transaction.
- *
- * @param {string} currency.
- * @param {object} unsigned transaction: {hex:'...', fee:'...', sighashes:['...', '...']}
- * @return {object} signed transaction.
- */
-Account.prototype.signTransaction = function (currency, tx) {
-	var keyPair, sign,
-		pkey = this.get('privatekey');
-
-	if (!(tx.sighashes) || !(tx.sighashes instanceof Array)) {
-		console.log('ERR: The "sighashes" attribute is required.');
-		return;
-	}
-
-	//TODO review it. the currency was set in the generateAccount method.
-	this.set('currency', currency);
-
-	tx.user_signature = [];
-	tx.operator_signatures = [];
-
-	tx.sighashes.forEach(function(sighash) {
-		keyPair = bitcoin.ECKey.fromWIF(pkey);
-		sign = bitcoin.Message.sign(keyPair, sighash).toString('base64');
-		tx.user_signature.push(sign);
-
-		//TODO implement the operator signatures
-	});
-
-	return tx;
-};
 
 /**
  * Instance method that gets the value of an indicated attribute.
@@ -119,7 +109,12 @@ Account.prototype.set = function (name, value) {
  *                  {'salt':'...','...':'currency','data':'{'ct':'...','iv':'...','s':'...'}'}
  */
 Account.prototype.toString = function () {
-	return JSON.stringify(this.data);
+	var data = JSON.parse(JSON.stringify(this.data));
+
+	delete data.password;
+	delete data.privatekey;
+
+	return JSON.stringify(data);
 };
 
 /**
