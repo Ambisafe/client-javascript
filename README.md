@@ -33,7 +33,7 @@ Container with account JSON should be fetched from a server after successful log
 `account = new Ambisafe.Account(accountJsonAsString, password);`
 - Constructing transaction & validating against business logic rules like with account, creation and validation of transaction is out of scope of this library.
 - Signing transaction with customer key:
-`signedTransaction = account.signTransaction(currency, transaction);`
+`signedTransaction = Ambisafe.signTransaction(transaction, privateKey);`
 - Signed transaction should be submitted to server for co-signing and broadcasting.
 
 ##### Example 3: change password

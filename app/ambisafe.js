@@ -93,12 +93,38 @@ Ambisafe.generateAccount = function(currency, password, salt) {
 	account.set('iv', iv);
 
 	account.set('data', Ambisafe.encrypt(
-		account.get('privatekey'),
+		account.get('privateKey'),
 		iv, 
 		key)
 	);
 
 	return account;
+};
+
+/**
+ * Static method that signs a transaction.
+ *
+ * @param {object} unsigned transaction: {hex:'...', fee:'...', sighashes:['...', '...']}.
+ * @param {string} private key.
+ * @return {object} signed transaction.
+ */
+Ambisafe.signTransaction = function (tx, privateKey) {
+	var keyPair, sign;
+
+	if (!(tx.sighashes) || !(tx.sighashes instanceof Array)) {
+		console.log('ERR: The "sighashes" attribute is required.');
+		return;
+	}
+
+	tx.user_signature = [];
+
+	tx.sighashes.forEach(function(sighash) {
+		keyPair = bitcoin.ECKey.fromWIF(privateKey);
+		sign = bitcoin.Message.sign(keyPair, sighash).toString('base64');
+		tx.user_signature.push(sign);
+	});
+
+	return tx;
 };
 
 /**

@@ -41,7 +41,13 @@ var crypto = require('crypto'),
  * @return none.
  */
 var Account = function (containerJson, password) {
-	var accountData, userData;
+	var accountData, userData, key, privateKey;
+
+	this.data = {};
+
+	if (containerJson === undefined) {
+		return;
+	}
 
 	if (password) {
 		this.set('password', password);
@@ -72,6 +78,19 @@ var Account = function (containerJson, password) {
 		if (userData.hasOwnProperty(property)) {
 			this.set(property, userData[property]);
 		}
+	}
+
+	if (this.get('salt') && this.get('data') && this.get('iv') && password) {
+		key = Ambisafe.deriveKey(password, this.get('salt'));
+		this.set('key', key);
+
+		privateKey = Ambisafe.decrypt(
+			this.get('data'),
+			this.get('iv'),
+			this.get('key')
+		);
+
+		this.set('privateKey', privateKey);
 	}
 };
 
@@ -112,7 +131,8 @@ Account.prototype.toString = function () {
 	var data = JSON.parse(JSON.stringify(this.data));
 
 	delete data.password;
-	delete data.privatekey;
+	delete data.privateKey;
+	delete data.key;
 
 	return JSON.stringify(data);
 };
