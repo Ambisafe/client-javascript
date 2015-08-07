@@ -1,0 +1,21 @@
+{
+  "name": "ambisafe-client-library",
+  "version": "0.9.0",
+  "authors": [
+    "Charlie Fontana <charlie@ambisafe.co>"
+  ],
+  "description": "Javascript library used by Ambisafe.co for general purposes.",
+  "main": "app.js",
+  "moduleType": [
+    "node"
+  ],
+  "license": "See LICENSE",
+  "homepage": "www.ambisafe.co",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}
