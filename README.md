@@ -67,6 +67,23 @@ To change the password of a created account the user has to call to the `setNewP
 	account.setNewPassword(newEncryptionKey);
 	```
 
+##### Example 4: scan QR Code
+To scan a QR code uses the following javascript code.
+```
+
+Ambisafe.QRScanner.scanQR(divId, 
+	function(data){
+		alert(data);
+	},
+	function(error){
+		console.log(error);
+	}
+);
+```
+* The first parameter is a string that indicates the "id" attribute of a created "div" HTML element.
+* The second parameter is the function called when the QR code is captured.
+* The third parameter is the function called when an error happens.
+
 ## License
 
 See LICENSE

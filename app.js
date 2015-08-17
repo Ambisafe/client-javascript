@@ -23,6 +23,6 @@
  * @file app.js
  * @author Charlie Fontana <charlie@ambisafe.co>
  * @date 07/13/2015
- * @version 0.1
+ * @version 0.9.0
  */
 Ambisafe = require('./app/ambisafe.js');

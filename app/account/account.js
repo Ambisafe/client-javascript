@@ -24,7 +24,6 @@
  * Account class used to store all the information related to an user account.
  * @author Charlie Fontana <charlie@ambisafe.co>
  * @date 07/13/2015
- * @version 0.1
  */
 
 /**
@@ -47,10 +46,6 @@ var Account = function (containerJson, password) {
 
 	if (containerJson === undefined) {
 		return;
-	}
-
-	if (password) {
-		this.set('password', password);
 	}
 
 	if (typeof containerJson !== 'string') {
@@ -100,6 +95,23 @@ var Account = function (containerJson, password) {
 Account.prototype.data = {};
 
 /**
+ * Instance method that signs a transaction.
+ *
+ * @param {object} unsigned transaction: {hex:'...', fee:'...', sighashes:['...', '...']}.
+ * @return {object} signed transaction.
+ */
+Account.prototype.signTransaction = function (tx) {
+
+	var privateKey = this.get('privateKey');
+
+	if (privateKey) {
+		return Ambisafe.signTransaction(tx, privateKey);
+	}
+
+	console.log('ERR: The transaction was not signed. privateKey is not defined');
+};
+
+/**
  * Instance method that gets the value of an indicated attribute.
  *
  * @param {string} attribute name.
@@ -125,16 +137,51 @@ Account.prototype.set = function (name, value) {
  *
  * @param none.
  * @return {string} return the account data as string. 
- *                  {'salt':'...','...':'currency','data':'{'ct':'...','iv':'...','s':'...'}'}
  */
-Account.prototype.toString = function () {
-	var data = JSON.parse(JSON.stringify(this.data));
+Account.prototype.stringify = function () {
+	return JSON.stringify(this.data);
+};
 
-	delete data.password;
-	delete data.privateKey;
-	delete data.key;
+/**
+ * Intance method that parse the Account's data
+ *
+ * @param {string} return the account data as string
+ * @return none.
+ */
+Account.prototype.parse = function (data) {
+	if (typeof data !== 'string') {
+		console.log('ERR: The account data to parse has to be string');
+		return;
+	}
 
-	return JSON.stringify(data);
+	this.data = JSON.parse(data);
+};
+
+/**
+ * Intance method that get the Account's container as a Javascript object
+ *
+ * @param none.
+ * @return {object}
+ */
+Account.prototype.getContainer = function () {
+	var container = {};
+
+	container.publicKey = this.get('publicKey');
+	container.data = this.get('data');
+	container.salt = this.get('salt');
+	container.iv = this.get('iv');
+
+	return container;
+};
+
+/**
+ * Intance method that get the Account's container as string
+ *
+ * @param none.
+ * @return {string}
+ */
+Account.prototype.getStringContainer = function () {
+	return JSON.stringify(this.getContainer());
 };
 
 /**

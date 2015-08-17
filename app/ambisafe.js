@@ -24,7 +24,6 @@
  * Ambisafe class used to define the functions of the library
  * @author Charlie Fontana <charlie@ambisafe.co>
  * @date 07/13/2015
- * @version 0.1
  */
 
 /**
@@ -32,7 +31,9 @@
  */
 var bitcoin = require('bitcoinjs-lib'),
 	pbkdf2 = require('crypto-PBKDF2'),
-	crypto = require('crypto');
+	crypto = require('crypto'),
+	BigInteger = require('bigi'),
+	uuid4 = require('uuid4');
 
 /**
  * Defines the Ambisafe constructor.
@@ -49,9 +50,10 @@ Ambisafe.currency.BITCOIN = 'BTC';
 
 /**
  * Defines the Ambisafe.Account class based on the ./account/account.js file.
- * It was solved in this way to prevent the conflict between the "Account" class and another customer class.
+ * Defines the Ambisafe.QRScanner class based on the ./qrscanner/qrscanner.js file.
  */
 Ambisafe.Account = require('./account/account.js');
+Ambisafe.QRScanner = require('./qrscanner/qrscanner.js');
 
 /**
  * Static method that creates an account and save it. 
@@ -71,14 +73,13 @@ Ambisafe.generateAccount = function(currency, password, salt) {
 	}
 
 	if (!salt) {
-		salt = Ambisafe.generateSalt();
+		salt = uuid4();
 	}
 
 	key = Ambisafe.deriveKey(password, salt);
 
 	account = new Ambisafe.Account();
 	account.set('key', key);
-	account.set('password', password);
 	account.set('salt', salt);
 
 	if (currency) {
@@ -86,9 +87,8 @@ Ambisafe.generateAccount = function(currency, password, salt) {
 	}
 
 	eckey = bitcoin.ECKey.makeRandom();
-	account.set('privateKey', eckey.toWIF());
+	account.set('privateKey', eckey.d.toHex());
 	account.set('publicKey', eckey.pub.toHex());
-
 	iv = Ambisafe.generateRandomValue(16);
 	account.set('iv', iv);
 
@@ -109,19 +109,21 @@ Ambisafe.generateAccount = function(currency, password, salt) {
  * @return {object} signed transaction.
  */
 Ambisafe.signTransaction = function (tx, privateKey) {
-	var keyPair, sign;
+	var keyPair, sign, buffer, d;
 
 	if (!(tx.sighashes) || !(tx.sighashes instanceof Array)) {
 		console.log('ERR: The "sighashes" attribute is required.');
 		return;
 	}
 
-	tx.user_signature = [];
+	tx.user_signatures = [];
+	buffer = new Buffer(privateKey, 'hex');
+	d = BigInteger.fromBuffer(buffer);
+	keyPair = new bitcoin.ECKey(d, true);
 
 	tx.sighashes.forEach(function(sighash) {
-		keyPair = bitcoin.ECKey.fromWIF(privateKey);
-		sign = bitcoin.Message.sign(keyPair, sighash).toString('base64');
-		tx.user_signature.push(sign);
+		sign = keyPair.sign(new Buffer(sighash, 'hex')).toDER().toString('hex');
+		tx.user_signatures.push(sign);
 	});
 
 	return tx;
@@ -153,16 +155,14 @@ Ambisafe.generateSalt = function(explicitIterations) {
  * @return {string} return random value 
  */
 Ambisafe.generateRandomValue = function(length) {
-	var randomBytes, randomBytesHex;
+	var randomBytes;
 
 	if (!length) {
 		length = 256/16;
 	}
 
-	randomBytes = crypto.randomBytes(Math.ceil(length/2));
-	randomBytesHex = randomBytes.toString('hex');
-
-	return randomBytesHex.slice(0, length);
+	randomBytes = crypto.randomBytes(Math.ceil(length));
+	return randomBytes.toString('hex');
 };
 
 /**
@@ -202,11 +202,11 @@ Ambisafe.encrypt = function(cleardata, iv, cryptkey) {
 
 	bufferCryptKey = new Buffer(cryptkey);
 
-	encipher = crypto.createCipheriv('aes-256-cbc', bufferCryptKey, iv);
+	encipher = crypto.createCipheriv('aes-256-cbc', bufferCryptKey, new Buffer(iv, 'hex'));
 	encryptData  = encipher.update(cleardata, 'utf8', 'binary');
 
 	encryptData += encipher.final('binary');
-	encodeEncryptData = new Buffer(encryptData, 'binary').toString('base64');
+	encodeEncryptData = new Buffer(encryptData, 'binary').toString('hex');
 
 	return encodeEncryptData;
 };
@@ -224,9 +224,9 @@ Ambisafe.decrypt = function(encryptdata, iv, cryptkey) {
 
 	bufferCryptKey = new Buffer(cryptkey);
 
-	encryptdata = new Buffer(encryptdata, 'base64').toString('binary');
+	encryptdata = new Buffer(encryptdata, 'hex').toString('binary');
 
-	decipher = crypto.createDecipheriv('aes-256-cbc', bufferCryptKey, iv);
+	decipher = crypto.createDecipheriv('aes-256-cbc', bufferCryptKey, new Buffer(iv, 'hex'));
 	decoded  = decipher.update(encryptdata, 'binary', 'utf8');
 
 	decoded += decipher.final('utf8');
