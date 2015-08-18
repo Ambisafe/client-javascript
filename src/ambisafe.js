@@ -38,7 +38,7 @@ var bitcoin = require('bitcoinjs-lib'),
 /**
  * Defines the Ambisafe constructor.
  */
-Ambisafe = function () {
+var Ambisafe = function () {
 
 };
 

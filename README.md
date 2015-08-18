@@ -12,7 +12,8 @@ npm install
 ```
 
 ## Library Generation
-`browserify app.js | uglifyjs > ambisafe.min.js`
+`npm run build`
+`npm run build-debug`
 
 ## Examples
 ##### Example 1: create account & save

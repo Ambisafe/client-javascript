@@ -8,5 +8,16 @@
 		"crypto": "latest",
 		"bigi": "latest",
 		"uuid4": "latest"
+	},
+	"devDependencies": {
+		"browserify": "^11.0.1",
+		"uglify-js": "^2.4.24",
+		"watchify": "^3.3.1"
+	},
+	"scripts": {
+		"build-debug": "browserify src/ambisafe.js -d --s Ambisafe > dist/ambisafe.js",
+		"build-min": "browserify src/ambisafe.js --s Ambisafe | uglifyjs -c > dist/ambisafe.min.js",
+		"build": "npm run build-debug && npm run build-min",
+		"watch": "watchify src/ambisafe.js -d --s Ambisafe -o dist/ambisafe.js -v"
 	}
 }
