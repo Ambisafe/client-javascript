@@ -1,12 +1,12 @@
 {
 	"name": "ambisafe-client-javascript",
-	"main": "app.js",
-	"version": "0.9.1",
+	"main": "src/ambisafe.js",
+	"version": "0.9.2",
 	"dependencies": {
 		"crypto-pbkdf2": "latest",
 		"bitcoinjs-lib": "latest",
 		"crypto": "latest",
-	    "bigi": "latest",
-	  	"uuid4": "latest"
+		"bigi": "latest",
+		"uuid4": "latest"
 	}
 }
