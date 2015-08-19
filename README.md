@@ -13,7 +13,6 @@ npm install
 
 ## Library Generation
 `npm run build`
-`npm run build-debug`
 
 ## Examples
 ##### Example 1: create account & save
