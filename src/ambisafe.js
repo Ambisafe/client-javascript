@@ -183,7 +183,7 @@ Ambisafe.deriveKey = function(password, salt, depth) {
 	key = pbkdf2.PBKDF2(
 		password,
 		salt,
-		{ 'keySize': 256/64, 'iterations': depth }
+		{ 'keySize': 512/32, 'iterations': depth }
 	);
 
 	return key.toString();
