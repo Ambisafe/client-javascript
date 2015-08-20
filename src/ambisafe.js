@@ -183,7 +183,7 @@ Ambisafe.deriveKey = function(password, salt, depth) {
 	key = pbkdf2.PBKDF2(
 		password,
 		salt,
-		{ 'keySize': 512/32, 'iterations': depth }
+		{ 'keySize': 256/32, 'iterations': depth }
 	);
 
 	return key.toString();
@@ -200,7 +200,7 @@ Ambisafe.deriveKey = function(password, salt, depth) {
 Ambisafe.encrypt = function(cleardata, iv, cryptkey) {
 	var encipher, encryptData, encodeEncryptData, bufferCryptKey;
 
-	bufferCryptKey = new Buffer(cryptkey);
+	bufferCryptKey = new Buffer(cryptkey, 'hex');
 
 	encipher = crypto.createCipheriv('aes-256-cbc', bufferCryptKey, new Buffer(iv, 'hex'));
 	encryptData  = encipher.update(cleardata, 'utf8', 'binary');
@@ -222,7 +222,7 @@ Ambisafe.encrypt = function(cleardata, iv, cryptkey) {
 Ambisafe.decrypt = function(encryptdata, iv, cryptkey) {
 	var decipher, decoded, bufferCryptKey;
 
-	bufferCryptKey = new Buffer(cryptkey);
+	bufferCryptKey = new Buffer(cryptkey, 'hex');
 
 	encryptdata = new Buffer(encryptdata, 'hex').toString('binary');
 
