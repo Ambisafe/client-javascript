@@ -112,6 +112,37 @@ Account.prototype.signTransaction = function (tx) {
 };
 
 /**
+ * Instance method that set a new password
+ *
+ * @param {string} password
+ * @return none.
+ */
+Account.prototype.setNewPassword = function (password) {
+	var curKey, curData,
+		newKey, newData,
+		privateKey, iv;
+
+	if (!this.get('salt') || !this.get('data') || !this.get('iv')) {
+		console.log('ERR: The following attributes are required: salt, data and iv.');
+		return;
+	}
+
+	curKey = this.get('key');
+	curData = this.get('data');
+
+	privateKey = Ambisafe.decrypt(curData, this.get('iv'), curKey);
+
+	newKey = Ambisafe.deriveKey(password, this.get('salt'));
+
+	this.set('iv', Ambisafe.generateRandomValue(16));
+	newData = Ambisafe.encrypt(privateKey, this.get('iv'), newKey);
+
+	this.set('data', newData);
+	this.set('key', newKey);
+	this.set('privateKey', privateKey);
+}
+
+/**
  * Instance method that gets the value of an indicated attribute.
  *
  * @param {string} attribute name.
