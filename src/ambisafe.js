@@ -30,7 +30,6 @@
  * This section defines the required libraries
  */
 var bitcoin = require('bitcoinjs-lib'),
-	pbkdf2 = require('crypto-PBKDF2'),
 	crypto = require('crypto'),
 	BigInteger = require('bigi'),
 	uuid4 = require('uuid4');
@@ -129,24 +128,6 @@ Ambisafe.signTransaction = function (tx, privateKey) {
 	return tx;
 };
 
-/**
- * Static method that grabs a new salt value.
- *
- * @param {number} explicitIterations An integer
- * @return {string} return iterations and salt together as one string ({hex-iterations}.{base64-salt})
- */
-Ambisafe.generateSalt = function(explicitIterations) {
-	var bytes, iterations;
-
-	if (!explicitIterations) {
-		explicitIterations = 1000;
-	}
-
-	bytes = pbkdf2.lib.WordArray.random(192/8);
-	iterations = explicitIterations.toString(16);
-
-	return iterations + '.' + bytes.toString(pbkdf2.enc.Base64);
-};
 
 /**
  * Static method that generates random values 
@@ -180,13 +161,9 @@ Ambisafe.deriveKey = function(password, salt, depth) {
 		depth = 1000;
 	}
 
-	key = pbkdf2.PBKDF2(
-		password,
-		salt,
-		{ 'keySize': 256/32, 'iterations': depth }
-	);
+	key = crypto.pbkdf2Sync(password, salt, depth, 32, 'sha512');
 
-	return key.toString();
+	return key.toString('hex');
 };
 
 /**
