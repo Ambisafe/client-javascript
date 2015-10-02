@@ -30,7 +30,8 @@
  * This section defines the required libraries
  */
 var crypto = require('crypto'),
-	bitcoin = require('bitcoinjs-lib');
+	bitcoin = require('bitcoinjs-lib'),
+	Ambisafe = require('./../ambisafe');
 
 /**
  * Defines the Account constructor.
@@ -85,7 +86,7 @@ var Account = function (containerJson, password) {
 			this.get('key')
 		);
 
-		this.set('privateKey', privateKey);
+		this.set('privateKey', privateKey.toString('hex'));
 	}
 };
 
@@ -139,7 +140,7 @@ Account.prototype.setNewPassword = function (password) {
 
 	this.set('data', newData);
 	this.set('key', newKey);
-	this.set('privateKey', privateKey);
+	this.set('privateKey', privateKey.toString('hex'));
 }
 
 /**
