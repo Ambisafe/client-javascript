@@ -35,12 +35,12 @@ This supposed to happen after user have filled registration form and clicked sub
 
 
 ##### Example 2: sign in & create transaction
-Container with account JSON should be fetched from a server after successful login.The most optimal way to fetch it depends client application and therefore delegated to it.
+Container with account JSON should be fetched from a server after successful login. The most optimal way to fetch it depends client application and therefore delegated to it.
 
 * Decrypting account with private key: account json as it returned by **Server + password**, entered during authentication. Password should **never** be transmitted to server. Exception can be thrown here if password is incorrect.
 	```
 	account = new Ambisafe.Account(
-				containerJson, 
+				container, 
 				password
 	);
 	```
@@ -59,12 +59,12 @@ To change the password of a created account the user has to call to the `setNewP
 * Based on a created account: 
 	```
 	account = new Ambisafe.Account(
-				containerJson, 
+				container, 
 				password);
 	```
-* Call the **setNewPassword** function with the **newEncryptionKey** attribute: 
+* Call the **setNewPassword** function with the **newPassword** attribute: 
 	```
-	account.setNewPassword(newEncryptionKey);
+	account.setNewPassword(newPassword);
 	```
 
 ##### Example 4: scan QR Code
