@@ -1,3 +1,6 @@
-/**
- * Created by anton44eg on 02.10.15.
- */
+var Ambisafe = require('./ambisafe');
+
+require('./account/account');
+require('./qrscanner/qrscanner');
+
+module.exports = Ambisafe;
