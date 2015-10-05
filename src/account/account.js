@@ -43,11 +43,11 @@ var crypto = require('crypto'),
  * @return none.
  */
 Ambisafe.Account = function (container, password) {
-    var key, privateKey;
+    var key, privateKey, property;
 
     this.data = {};
 
-    for (var property in container) {
+    for (property in container) {
         if (container.hasOwnProperty(property)) {
             this.set(property, container[property]);
         }
@@ -63,7 +63,7 @@ Ambisafe.Account = function (container, password) {
             this.get('key')
         ).toString('hex');
 
-        this.set('privateKey', privateKey);
+        this.set('private_key', privateKey);
     }
 };
 
@@ -80,13 +80,13 @@ Ambisafe.Account.prototype.data = {};
  */
 Ambisafe.Account.prototype.signTransaction = function (tx) {
 
-    var privateKey = this.get('privateKey');
+    var privateKey = this.get('private_key');
 
     if (privateKey) {
         return Ambisafe.signTransaction(tx, privateKey);
     }
 
-    console.log('ERR: The transaction was not signed. privateKey is not defined');
+    console.log('ERR: The transaction was not signed. The "private_key" attribute is not defined');
 };
 
 /**
@@ -98,7 +98,7 @@ Ambisafe.Account.prototype.signTransaction = function (tx) {
 Ambisafe.Account.prototype.setNewPassword = function (password) {
     var curKey, curData,
         newKey, newData,
-        privateKey, iv;
+        privateKey;
 
     if (!this.get('salt') || !this.get('data') || !this.get('iv')) {
         console.log('ERR: The following attributes are required: salt, data and iv.');
@@ -117,8 +117,8 @@ Ambisafe.Account.prototype.setNewPassword = function (password) {
 
     this.set('data', newData);
     this.set('key', newKey);
-    this.set('privateKey', privateKey.toString('hex'));
-}
+    this.set('private_key', privateKey.toString('hex'));
+};
 
 /**
  * Instance method that gets the value of an indicated attribute.
@@ -173,7 +173,7 @@ Ambisafe.Account.prototype.parse = function (data) {
 Ambisafe.Account.prototype.getContainer = function () {
     var container = {};
 
-    container.publicKey = this.get('publicKey');
+    container.public_key = this.get('public_key');
     container.data = this.get('data');
     container.salt = this.get('salt');
     container.iv = this.get('iv');
