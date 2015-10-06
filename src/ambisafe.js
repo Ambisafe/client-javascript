@@ -25,21 +25,19 @@
  * @author Charlie Fontana <charlie@ambisafe.co>
  * @date 07/13/2015
  */
-
+'use strict';
 /**
  * This section defines the required libraries
  */
 var bitcoin = require('bitcoinjs-lib'),
-	crypto = require('crypto'),
-	BigInteger = require('bigi'),
-	uuid4 = require('uuid4');
+    crypto = require('crypto'),
+    BigInteger = require('bigi'),
+    uuid4 = require('uuid4');
 
 /**
  * Defines the Ambisafe constructor.
  */
-var Ambisafe = function () {
-
-};
+var Ambisafe = function () {};
 
 /**
  * Defines the static constants
@@ -47,12 +45,6 @@ var Ambisafe = function () {
 Ambisafe.currency = {};
 Ambisafe.currency.BITCOIN = 'BTC';
 
-/**
- * Defines the Ambisafe.Account class based on the ./account/account.js file.
- * Defines the Ambisafe.QRScanner class based on the ./qrscanner/qrscanner.js file.
- */
-Ambisafe.Account = require('./account/account.js');
-Ambisafe.QRScanner = require('./qrscanner/qrscanner.js');
 
 /**
  * Static method that creates an account and save it. 
@@ -63,69 +55,79 @@ Ambisafe.QRScanner = require('./qrscanner/qrscanner.js');
  * @param {string} salt as string
  * @return {Ambisafe.Account} return the generated account object
  */
-Ambisafe.generateAccount = function(currency, password, salt) {
-	var account, key, eckey, iv;
+Ambisafe.generateAccount = function (currency, password, salt) {
+    var account, key, keyPair, iv;
 
-	if (!currency || !password) {
-		console.log('ERR: currency and password are required');
-		return;
-	}
+    if (!currency || !password) {
+        console.log('ERR: currency and password are required');
+        return;
+    }
 
-	if (!salt) {
-		salt = uuid4();
-	}
+    if (!salt) {
+        salt = uuid4();
+    }
 
-	key = Ambisafe.deriveKey(password, salt);
+    key = Ambisafe.deriveKey(password, salt);
 
-	account = new Ambisafe.Account();
-	account.set('key', key);
-	account.set('salt', salt);
+    account = new Ambisafe.Account();
+    account.set('key', key);
+    account.set('salt', salt);
 
-	if (currency) {
-		account.set('currency', currency);
-	}
+    if (currency) {
+        account.set('currency', currency);
+    }
 
-	eckey = bitcoin.ECKey.makeRandom();
-	account.set('privateKey', eckey.d.toHex());
-	account.set('publicKey', eckey.pub.toHex());
-	iv = Ambisafe.generateRandomValue(16);
-	account.set('iv', iv);
+    keyPair = Ambisafe.generateKeyPair();
+    account.set('private_key', keyPair.private_key);
+    account.set('public_key', keyPair.public_key);
+    iv = Ambisafe.generateRandomValue(16);
+    account.set('iv', iv);
 
-	account.set('data', Ambisafe.encrypt(
-		account.get('privateKey'),
-		iv, 
-		key)
-	);
+    account.set('data', Ambisafe.encrypt(
+        new Buffer(account.get('private_key'), 'hex'),
+        iv,
+        key
+    ));
 
-	return account;
+    return account;
 };
+
+
+Ambisafe.generateKeyPair = function () {
+    var eckey = bitcoin.ECKey.makeRandom();
+    return {
+        private_key: eckey.d.toHex(),
+        public_key: eckey.pub.toHex()
+    };
+};
+
 
 /**
  * Static method that signs a transaction.
  *
- * @param {object} unsigned transaction: {hex:'...', fee:'...', sighashes:['...', '...']}.
- * @param {string} private key.
+ * @param {object} tx unsigned transaction: {hex:'...', fee:'...', sighashes:['...', '...']}.
+ * @param {string} private_key.
  * @return {object} signed transaction.
  */
-Ambisafe.signTransaction = function (tx, privateKey) {
-	var keyPair, sign, buffer, d;
+Ambisafe.signTransaction = function (tx, private_key) {
+    var keyPair, sign, buffer, d;
 
-	if (!(tx.sighashes) || !(tx.sighashes instanceof Array)) {
-		console.log('ERR: The "sighashes" attribute is required.');
-		return;
-	}
+    if (!(tx.sighashes) || !(tx.sighashes instanceof Array)) {
+        console.log('ERR: The "sighashes" attribute is required.');
+        return;
+    }
 
-	tx.user_signatures = [];
-	buffer = new Buffer(privateKey, 'hex');
-	d = BigInteger.fromBuffer(buffer);
-	keyPair = new bitcoin.ECKey(d, true);
+    tx.user_signatures = [];
+    buffer = new Buffer(private_key, 'hex');
+    d = BigInteger.fromBuffer(buffer);
+    keyPair = new bitcoin.ECKey(d, true);
 
-	tx.sighashes.forEach(function(sighash) {
-		sign = keyPair.sign(new Buffer(sighash, 'hex')).toDER().toString('hex');
-		tx.user_signatures.push(sign);
-	});
+    tx.sighashes.forEach(function (sighash) {
+        sign = keyPair.sign(new Buffer(sighash, 'hex')).toDER().toString('hex');
+        tx.user_signatures.push(sign);
+    });
 
-	return tx;
+    return tx;
 };
 
 
@@ -135,15 +137,15 @@ Ambisafe.signTransaction = function (tx, privateKey) {
  * @param {number} length An integer
  * @return {string} return random value 
  */
-Ambisafe.generateRandomValue = function(length) {
-	var randomBytes;
+Ambisafe.generateRandomValue = function (length) {
+    var randomBytes;
 
-	if (!length) {
-		length = 256/16;
-	}
+    if (!length) {
+        length = 256 / 16;
+    }
 
-	randomBytes = crypto.randomBytes(Math.ceil(length));
-	return randomBytes.toString('hex');
+    randomBytes = crypto.randomBytes(Math.ceil(length));
+    return randomBytes.toString('hex');
 };
 
 /**
@@ -154,16 +156,16 @@ Ambisafe.generateRandomValue = function(length) {
  * @param {number} depth
  * @return {string} key
  */
-Ambisafe.deriveKey = function(password, salt, depth) {
-	var key;
+Ambisafe.deriveKey = function (password, salt, depth) {
+    var key;
 
-	if (!depth) {
-		depth = 1000;
-	}
+    if (!depth) {
+        depth = 1000;
+    }
 
-	key = crypto.pbkdf2Sync(password, salt, depth, 32, 'sha512');
+    key = crypto.pbkdf2Sync(password, salt, depth, 32, 'sha512');
 
-	return key.toString('hex');
+    return key.toString('hex');
 };
 
 /**
@@ -174,18 +176,18 @@ Ambisafe.deriveKey = function(password, salt, depth) {
  * @param {string} cryptkey
  * @return {string} encrypted data
  */
-Ambisafe.encrypt = function(cleardata, iv, cryptkey) {
-	var encipher, encryptData, encodeEncryptData, bufferCryptKey;
+Ambisafe.encrypt = function (cleardata, iv, cryptkey) {
+    var encipher, encryptData, encodeEncryptData, bufferCryptKey;
 
-	bufferCryptKey = new Buffer(cryptkey, 'hex');
+    bufferCryptKey = new Buffer(cryptkey, 'hex');
 
-	encipher = crypto.createCipheriv('aes-256-cbc', bufferCryptKey, new Buffer(iv, 'hex'));
-	encryptData  = encipher.update(cleardata, 'utf8', 'binary');
+    encipher = crypto.createCipheriv('aes-256-cbc', bufferCryptKey, new Buffer(iv, 'hex'));
+    encryptData  = encipher.update(cleardata, 'utf8', 'binary');
 
-	encryptData += encipher.final('binary');
-	encodeEncryptData = new Buffer(encryptData, 'binary').toString('hex');
+    encryptData += encipher.final('binary');
+    encodeEncryptData = new Buffer(encryptData, 'binary').toString('hex');
 
-	return encodeEncryptData;
+    return encodeEncryptData;
 };
 
 /**
@@ -196,19 +198,14 @@ Ambisafe.encrypt = function(cleardata, iv, cryptkey) {
  * @param {string} cryptkey
  * @return {string} decrypted text
  */
-Ambisafe.decrypt = function(encryptdata, iv, cryptkey) {
-	var decipher, decoded, bufferCryptKey;
+Ambisafe.decrypt = function (encryptdata, iv, cryptkey) {
+    var decipher, decoded, bufferCryptKey;
 
-	bufferCryptKey = new Buffer(cryptkey, 'hex');
+    bufferCryptKey = new Buffer(cryptkey, 'hex');
 
-	encryptdata = new Buffer(encryptdata, 'hex').toString('binary');
-
-	decipher = crypto.createDecipheriv('aes-256-cbc', bufferCryptKey, new Buffer(iv, 'hex'));
-	decoded  = decipher.update(encryptdata, 'binary', 'utf8');
-
-	decoded += decipher.final('utf8');
-
-	return decoded;
+    decipher = crypto.createDecipheriv('aes-256-cbc', bufferCryptKey, new Buffer(iv, 'hex'));
+    decoded  = Buffer.concat([decipher.update(new Buffer(encryptdata, 'hex')), decipher.final()]);
+    return decoded;
 };
 
 /**
@@ -217,15 +214,15 @@ Ambisafe.decrypt = function(encryptdata, iv, cryptkey) {
  * @param {string} input
  * @return {string} SHA1 hash
  */
-Ambisafe.SHA1 = function(input) {
-	var shasum = crypto.createHash('sha1');
+Ambisafe.SHA1 = function (input) {
+    var shasum = crypto.createHash('sha1');
 
-	shasum.update(input);
+    shasum.update(input);
 
-	return shasum.digest('hex');
+    return shasum.digest('hex');
 };
 
 /**
  * exports the created Ambisafe object.
  */
-module.exports = Ambisafe;
+var exports = module.exports = Ambisafe;

@@ -28,16 +28,17 @@
 /**
  * This section defines the required libraries
  */
-var qrcode = require('./qrcode.js');
+var qrcode = require('./qrcode.js'),
+	Ambisafe = require('../ambisafe');
 
 /**
  * Defines the QRScanner constructor.
  */
-var QRScanner = function () {
+Ambisafe.QRScanner = function () {
 
 };
 
-QRScanner.scanQR = function(divID, success, error) {
+Ambisafe.QRScanner.scanQR = function(divID, success, error) {
 	var div, height, width, video, canvas, context, check, play;
 
 	if (typeof window === 'undefined') {
@@ -119,8 +120,3 @@ QRScanner.scanQR = function(divID, success, error) {
 		success(data);
 	};
 };
-
-/**
- * exports the created QRScanner object.
- */
-module.exports = QRScanner;
