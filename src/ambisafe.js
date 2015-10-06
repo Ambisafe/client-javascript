@@ -78,14 +78,13 @@ Ambisafe.generateAccount = function (currency, password, salt) {
     }
 
     keyPair = Ambisafe.generateKeyPair();
-
-    account.set('privateKey', keyPair.privateKey);
-    account.set('publicKey', keyPair.publicKey);
+    account.set('private_key', keyPair.private_key);
+    account.set('public_key', keyPair.public_key);
     iv = Ambisafe.generateRandomValue(16);
     account.set('iv', iv);
 
     account.set('data', Ambisafe.encrypt(
-        new Buffer(account.get('privateKey'), 'hex'),
+        new Buffer(account.get('private_key'), 'hex'),
         iv,
         key
     ));
@@ -97,8 +96,8 @@ Ambisafe.generateAccount = function (currency, password, salt) {
 Ambisafe.generateKeyPair = function () {
     var eckey = bitcoin.ECKey.makeRandom();
     return {
-        privateKey: eckey.d.toHex(),
-        publicKey: eckey.pub.toHex()
+        private_key: eckey.d.toHex(),
+        public_key: eckey.pub.toHex()
     };
 };
 
@@ -107,10 +106,10 @@ Ambisafe.generateKeyPair = function () {
  * Static method that signs a transaction.
  *
  * @param {object} tx unsigned transaction: {hex:'...', fee:'...', sighashes:['...', '...']}.
- * @param {string} privateKey private key.
+ * @param {string} private_key.
  * @return {object} signed transaction.
  */
-Ambisafe.signTransaction = function (tx, privateKey) {
+Ambisafe.signTransaction = function (tx, private_key) {
     var keyPair, sign, buffer, d;
 
     if (!(tx.sighashes) || !(tx.sighashes instanceof Array)) {
@@ -119,7 +118,7 @@ Ambisafe.signTransaction = function (tx, privateKey) {
     }
 
     tx.user_signatures = [];
-    buffer = new Buffer(privateKey, 'hex');
+    buffer = new Buffer(private_key, 'hex');
     d = BigInteger.fromBuffer(buffer);
     keyPair = new bitcoin.ECKey(d, true);
 
