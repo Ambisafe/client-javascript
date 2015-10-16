@@ -1620,7 +1620,7 @@ Decoder.decode = function(bits) {
 	return reader;
 };
 
-qrcode = {};
+var qrcode = {};
 qrcode.imagedata = null;
 qrcode.width = 0;
 qrcode.height = 0;
