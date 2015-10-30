@@ -61,7 +61,7 @@ Ambisafe.Account = function (container, password) {
             this.get('data'),
             this.get('iv'),
             this.get('key')
-        ).toString('hex');
+        ).toString();
 
         this.set('private_key', privateKey);
     }
