@@ -1,6 +1,10 @@
-var assert = require("assert"),
-    Ambisafe = require('../src/index'),
-    sinon = require('sinon');
+'use strict';
+
+import assert from "assert";
+import Ambisafe from '../src';
+import sinon from 'sinon';
+import ETokenClient from '../src/e-token-client';
+
 
 describe('Ambisafe', function () {
     describe('#generateAccount()', function () {
@@ -58,5 +62,149 @@ describe('Ambisafe.Account', function () {
         assert.equal(account.get('private_key'), '8a3167b6032285a9fd89fcf9110d51ce1cffaf0eb21bc316560d0e510ebac7cd');
         assert.equal(account.get('salt'), 'ca20faef-ac3f-40a6-99c0-500855c03207');
         assert.equal(account.get('iv'), 'ff55e03b11dc43adf839c3aee3632b36');
+    });
+});
+
+describe('Ambisafe.ethereum', function () {
+    it('should create web3 instance', function () {
+        let web3 = Ambisafe.ethereum.getWeb3();
+        assert.equal(typeof web3, 'object');
+    });
+});
+
+describe('Ambisafe.e-token-client', function () {
+    let at = '0xac9d1b54e446a64e19cf4adffbc1948dc2ab8f0c',
+        abi = [{
+            "constant": true,
+            "inputs": [{"name": "_owner", "type": "address"}, {"name": "_symbol", "type": "bytes32"}],
+            "name": "balanceOf",
+            "outputs": [{"name": "balance", "type": "uint256"}],
+            "type": "function"
+        }, {
+            "constant": false,
+            "inputs": [{"name": "_to", "type": "address"}, {"name": "_value", "type": "uint256"}, {
+                "name": "_symbol",
+                "type": "bytes32"
+            }],
+            "name": "transfer",
+            "outputs": [{"name": "", "type": "bool"}],
+            "type": "function"
+        }, {
+            "constant": false,
+            "inputs": [{"name": "_from", "type": "address"}, {"name": "_to", "type": "address"}],
+            "name": "recover",
+            "outputs": [{"name": "", "type": "bool"}],
+            "type": "function"
+        }, {
+            "constant": true,
+            "inputs": [{"name": "_symbol", "type": "bytes32"}],
+            "name": "name",
+            "outputs": [{"name": "", "type": "bytes32"}],
+            "type": "function"
+        }, {
+            "constant": false,
+            "inputs": [{"name": "_symbol", "type": "bytes32"}, {"name": "_value", "type": "uint256"}, {
+                "name": "_name",
+                "type": "bytes32"
+            }, {"name": "_description", "type": "bytes32"}, {
+                "name": "_baseUnit",
+                "type": "uint8"
+            }, {"name": "_isReissuable", "type": "bool"}],
+            "name": "issueAsset",
+            "outputs": [{"name": "", "type": "bool"}],
+            "type": "function"
+        }, {
+            "constant": false,
+            "inputs": [{"name": "_symbol", "type": "bytes32"}, {"name": "_value", "type": "uint256"}],
+            "name": "issue",
+            "outputs": [{"name": "", "type": "bool"}],
+            "type": "function"
+        }, {
+            "constant": true,
+            "inputs": [{"name": "_symbol", "type": "bytes32"}],
+            "name": "totalSupply",
+            "outputs": [{"name": "supply", "type": "uint256"}],
+            "type": "function"
+        }, {
+            "constant": false,
+            "inputs": [{"name": "_symbol", "type": "bytes32"}, {"name": "_value", "type": "uint256"}],
+            "name": "revoke",
+            "outputs": [{"name": "", "type": "bool"}],
+            "type": "function"
+        }, {
+            "constant": true,
+            "inputs": [{"name": "_symbol", "type": "bytes32"}],
+            "name": "description",
+            "outputs": [{"name": "", "type": "bytes32"}],
+            "type": "function"
+        }, {
+            "constant": true,
+            "inputs": [{"name": "", "type": "bytes32"}],
+            "name": "assetIndex",
+            "outputs": [{"name": "", "type": "uint256"}],
+            "type": "function"
+        }, {
+            "constant": true,
+            "inputs": [{"name": "", "type": "uint256"}],
+            "name": "assets",
+            "outputs": [{"name": "symbol", "type": "bytes32"}, {"name": "baseUnit", "type": "uint8"}, {
+                "name": "name",
+                "type": "bytes32"
+            }, {"name": "description", "type": "bytes32"}, {"name": "isReissuable", "type": "bool"}],
+            "type": "function"
+        }, {"inputs": [], "type": "constructor"}, {
+            "anonymous": false,
+            "inputs": [{"indexed": true, "name": "from", "type": "address"}, {
+                "indexed": true,
+                "name": "to",
+                "type": "address"
+            }, {"indexed": true, "name": "symbol", "type": "bytes32"}, {
+                "indexed": false,
+                "name": "value",
+                "type": "uint256"
+            }],
+            "name": "Transfer",
+            "type": "event"
+        }, {
+            "anonymous": false,
+            "inputs": [{"indexed": false, "name": "status", "type": "uint256"}],
+            "name": "OperationFailed",
+            "type": "event"
+        }],
+        web3 = Ambisafe.ethereum.getWeb3(),
+        client = new ETokenClient(at, 'c459603474e561b5cb54b8fdf2e65913c621c2473cf650c92c9daa97a830400e');
+    client.web3 = web3;
+
+    it('should issue token', function (done) {
+        return client.issueAsset("ANT44", 100, "ToxaCoin", "comment", 1, true)
+            .then(hash => {
+                console.log(hash);
+                done();
+            });
+    });
+
+    it('should show total supply', function (done) {
+        return client.totalSupply("ANT44").then(totalSupply => {
+            assert.equal(totalSupply, 100);
+            done();
+        });
+    });
+
+    it('should return balance of creator', function (done) {
+        client.currencySymbol = 'ANT44';
+        return client.balanceOf(client.signerAddress)
+            .then(balance => {
+                assert.equal(balance, 100);
+                done();
+            });
+    });
+
+    it('should transfer coins', function (done) {
+        client.currencySymbol = 'ANT44';
+        return client.transfer('0xd94440b42e32a98da08dba34884e8c35485ba551', 1)
+            .then(hash => {
+                console.log(hash);
+                done();
+            });
     });
 });
