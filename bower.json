@@ -1,8 +1,8 @@
 {
   "name": "ambisafe-client-library",
-  "version": "0.10.0",
+  "version": "0.11.0",
   "authors": [
-    "Charlie Fontana <charlie@ambisafe.co>"
+    "Charlie Fontana <charlie@ambisafe.co>",
   ],
   "description": "Javascript library used by Ambisafe.co for general purposes.",
   "main": "dist/ambisafe.js",
