@@ -1,7 +1,7 @@
 {
 	"name": "ambisafe-client-javascript",
 	"main": "src/index.js",
-	"version": "0.10.0",
+	"version": "0.11.0",
 	"dependencies": {
 		"bitcoinjs-lib": "1.5.7",
 		"crypto": "0.0.3",
@@ -12,14 +12,14 @@
 		"browserify": "^11.0.1",
 		"uglify-js": "^2.4.24",
 		"watchify": "^3.3.1",
-	    "mocha": "2.3.3",
-	    "sinon": "1.17.1"
+	  "mocha": "2.3.3",
+	  "sinon": "1.17.1"
 	},
 	"scripts": {
 		"build-debug": "browserify src/index.js -d --s Ambisafe > dist/ambisafe.js",
 		"build-min": "browserify src/index.js --s Ambisafe | uglifyjs -c > dist/ambisafe.min.js",
 		"build": "npm run build-debug && npm run build-min",
 		"watch": "watchify src/index.js -d --s Ambisafe -o dist/ambisafe.js -v",
-	    "test": "mocha"
+	  "test": "mocha"
 	}
 }

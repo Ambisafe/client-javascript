@@ -1,15 +1,15 @@
 /**
  * Copyright (c) 2015 Ambisafe Inc.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including the rights to use, copy, modify,
  * merge, publish, distribute, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -47,7 +47,7 @@ Ambisafe.currency.BITCOIN = 'BTC';
 
 
 /**
- * Static method that creates an account and save it. 
+ * Static method that creates an account and save it.
  * This supposed to happen after user have filled registration form and clicked submit.
  *
  * @param {string} currency as string
@@ -56,15 +56,15 @@ Ambisafe.currency.BITCOIN = 'BTC';
  * @return {Ambisafe.Account} return the generated account object
  */
 Ambisafe.generateAccount = function (currency, password, salt) {
-    var account, key, keyPair, iv;
+    var account,
+        key,
+        keyPair,
+        iv;
 
-    if (!currency || !password) {
-        console.log('ERR: currency and password are required');
-        return;
-    }
+    salt = salt || uid4();
 
-    if (!salt) {
-        salt = uuid4();
+    if (!password) {
+        throw Error('ERR: password are required');
     }
 
     key = Ambisafe.deriveKey(password, salt);
@@ -72,10 +72,6 @@ Ambisafe.generateAccount = function (currency, password, salt) {
     account = new Ambisafe.Account();
     account.set('key', key);
     account.set('salt', salt);
-
-    if (currency) {
-        account.set('currency', currency);
-    }
 
     keyPair = Ambisafe.generateKeyPair();
     account.set('private_key', keyPair.private_key);
@@ -92,6 +88,25 @@ Ambisafe.generateAccount = function (currency, password, salt) {
     return account;
 };
 
+Ambisafe.fromPrivateKey = function (privateKey, password, salt) {
+    var iv,
+        key,
+        account;
+    salt = salt || uuid4();
+    key = Ambisafe.deriveKey(password, salt);
+    account = new Ambisafe.Account();
+    account.set('private_key', privateKey);
+    account.set('public_key', (new bitcoin.ECKey(BigInteger.fromBuffer(new Buffer(privateKey, 'hex')))).pub.toHex());
+    iv = Ambisafe.generateRandomValue(16);
+    account.set('iv', iv);
+    account.set('salt', salt);
+    account.set('data', Ambisafe.encrypt(
+        new Buffer(account.get('private_key'), 'hex'),
+        iv,
+        key
+    ));
+    return account;
+}
 
 Ambisafe.generateKeyPair = function () {
     var eckey = bitcoin.ECKey.makeRandom();
@@ -132,10 +147,10 @@ Ambisafe.signTransaction = function (tx, private_key) {
 
 
 /**
- * Static method that generates random values 
+ * Static method that generates random values
  *
  * @param {number} length An integer
- * @return {string} return random value 
+ * @return {string} return random value
  */
 Ambisafe.generateRandomValue = function (length) {
     var randomBytes;
@@ -194,7 +209,7 @@ Ambisafe.encrypt = function (cleardata, iv, cryptkey) {
  * Static method that decrypts an input based on the Advanced Encryption Standard (AES)
  *
  * @param {string} encryptdata
- * @param {string} iv 
+ * @param {string} iv
  * @param {string} cryptkey
  * @return {string} decrypted text
  */
