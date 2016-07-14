@@ -61,7 +61,7 @@ Ambisafe.generateAccount = function (currency, password, salt) {
         keyPair,
         iv;
 
-    salt = salt || uid4();
+    salt = salt || uuid4();
 
     if (!password) {
         throw Error('ERR: password are required');
