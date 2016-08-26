@@ -1,7 +1,9 @@
-var Ambisafe = require('./ambisafe');
 
-require('./account/account');
-require('./qrscanner/qrscanner');
-Ambisafe.ethereum = require('./ethereum');
+import Ambisafe from './Ambisafe';
 
-module.exports = Ambisafe;
+import Ethereum from './Ethereum';
+
+export default {
+    Ambisafe,
+    Ethereum
+}
