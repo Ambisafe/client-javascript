@@ -7,11 +7,12 @@
   "dependencies": {
     "bigi": "1.4.1",
     "bitcoinjs-lib": "1.5.7",
-    "bluebird": "3.3.1",
+    "bluebird": "^3.4.6",
     "crypto": "0.0.3",
     "ethereumjs-tx": "1.0.0",
     "ethereumjs-util": "4.0.0",
-    "uuid4": "1.0.0",
+    "more-entropy": "0.0.7",
+    "sjcl": "^1.0.6",
     "web3": "0.15.2"
   },
   "devDependencies": {
@@ -22,15 +23,14 @@
     "babelify": "7.2.0",
     "browserify": "^11.0.1",
     "mocha": "2.3.3",
-    "sinon": "1.17.1",
     "uglify-js": "^2.4.24",
     "watchify": "^3.3.1"
   },
   "scripts": {
-    "build-debug": "browserify src/index.js -d --s Ambisafe > dist/ambisafe.js",
-    "build-min": "browserify src/index.js --s Ambisafe | uglifyjs -c > dist/ambisafe.min.js",
+    "build-debug": "browserify src/index.js -d -t babelify --s Ambisafe > dist/ambisafe.js",
+    "build-min": "browserify src/index.js -t babelify --s Ambisafe | uglifyjs -c > dist/ambisafe.min.js",
     "build": "npm run build-debug && npm run build-min",
     "watch": "watchify src/index.js -d --s Ambisafe -o dist/ambisafe.js -v",
-    "test": "mocha --compilers js:babel-core/register"
+    "test": "mocha --compilers js:babel-core/register --timeout 10000"
   }
 }

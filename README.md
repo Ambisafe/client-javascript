@@ -18,16 +18,14 @@ npm install
 ##### Example 1: create account & save
 This supposed to happen after user have filled registration form and clicked submit:
 
-* Create an account with the `Ambisafe.generateAccount` function. 
-	* The **currency** value has to be selected from the `Ambisafe.currency` object (eg: `Ambisafe.currency.BITCOIN`)
+* Create an account with the `Ambisafe.generateAccount` function.
 	* The **password** value is required.
 	* The **salt** value is not required.
 
-	Example: 
+	Example:
 	```
 	account = Ambisafe.generateAccount(
-				currency, 
-				password, 
+				password,
 				salt);
 	```
 * To convert the **account** attributes to a JSON string, execute the following line: `accountSerialized = account.toString();`
@@ -40,7 +38,7 @@ Container with account JSON should be fetched from a server after successful log
 * Decrypting account with private key: account json as it returned by **Server + password**, entered during authentication. Password should **never** be transmitted to server. Exception can be thrown here if password is incorrect.
 	```
 	account = new Ambisafe.Account(
-				container, 
+				container,
 				password
 	);
 	```
@@ -48,7 +46,7 @@ Container with account JSON should be fetched from a server after successful log
 * Signing transaction with customer key:
 	```
 	signedTransaction = Ambisafe.signTransaction(
-				transaction, 
+				transaction,
 				privateKey);
 	```
 * Signed transaction should be submitted to server for co-signing and broadcasting.
@@ -56,33 +54,16 @@ Container with account JSON should be fetched from a server after successful log
 ##### Example 3: change password
 To change the password of a created account the user has to call to the `setNewPassword` function:
 
-* Based on a created account: 
+* Based on a created account:
 	```
 	account = new Ambisafe.Account(
-				container, 
+				container,
 				password);
 	```
-* Call the **setNewPassword** function with the **newPassword** attribute: 
+* Call the **setNewPassword** function with the **newPassword** attribute:
 	```
 	account.setNewPassword(newPassword);
 	```
-
-##### Example 4: scan QR Code
-To scan a QR code uses the following javascript code.
-```
-
-Ambisafe.QRScanner.scanQR(divId, 
-	function(data){
-		alert(data);
-	},
-	function(error){
-		console.log(error);
-	}
-);
-```
-* The first parameter is a string that indicates the "id" attribute of a created "div" HTML element.
-* The second parameter is the function called when the QR code is captured.
-* The third parameter is the function called when an error happens.
 
 ## License
 

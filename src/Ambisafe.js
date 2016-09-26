@@ -1,398 +1,210 @@
-/**
- * Copyright (c) 2015 Ambisafe Inc.
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including the rights to use, copy, modify,
- * merge, publish, distribute, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- */
 
-/**
- * @file ambisafe.js
- * Ambisafe class used to define the functions of the library
- * @author Charlie Fontana <charlie@ambisafe.co>
- * @date 07/13/2015
- */
-'use strict';
-/**
- * This section defines the required libraries
- */
-var bitcoin = require('bitcoinjs-lib'),
-    crypto = require('crypto'),
-    BigInteger = require('bigi'),
-    uuid4 = require('uuid4');
+import bitcoin from 'bitcoinjs-lib';
+import crypto from 'crypto';
+import BigInteger from 'bigi';
+import secp256k1 from 'secp256k1';
+import Account from './Account';
 
-/**
- * Defines the Ambisafe constructor.
- */
-var Ambisafe = function () {};
+export default class Ambisafe {
 
-/**
- * Defines the static constants
- */
-Ambisafe.currency = {};
-Ambisafe.currency.BITCOIN = 'BTC';
+    /**
+     * Defines the Ambisafe constructor.
+     */
+     constructor() {
+     }
 
-
-/**
- * Static method that creates an account and save it.
- * This supposed to happen after user have filled registration form and clicked submit.
- *
- * @param {string} currency as string
- * @param {string} password as string
- * @param {string} salt as string
- * @return {Ambisafe.Account} return the generated account object
- */
-Ambisafe.generateAccount = function (currency, password, salt, keyPair) {
-    var account,
-        key,
-        iv;
-
-    salt = salt || uuid4();
-
-    if (!password) {
-        throw Error('ERR: password are required');
+    /**
+     * Static method to set the method to use by generateRandomValue
+     */
+    static setRandom(rng){
+        this.rng = rng;
+        return this;
     }
 
-    key = Ambisafe.deriveKey(password, salt);
-
-    account = new Ambisafe.Account();
-    account.set('key', key);
-    account.set('salt', salt);
-
-    if (!keyPair)
-        keyPair = Ambisafe.generateKeyPair();
-    account.set('private_key', keyPair.private_key);
-    account.set('public_key', keyPair.public_key);
-    iv = Ambisafe.generateRandomValue(16);
-    account.set('iv', iv);
-
-    account.set('data', Ambisafe.encrypt(
-        new Buffer(account.get('private_key'), 'hex'),
-        iv,
-        key
-    ));
-
-    return account;
-};
-
-Ambisafe.fromPrivateKey = function (privateKey, password, salt) {
-    var iv,
-        key,
-        account;
-    salt = salt || uuid4();
-    key = Ambisafe.deriveKey(password, salt);
-    account = new Ambisafe.Account();
-    account.set('private_key', privateKey);
-    account.set('public_key', (new bitcoin.ECKey(BigInteger.fromBuffer(new Buffer(privateKey, 'hex')))).pub.toHex());
-    iv = Ambisafe.generateRandomValue(16);
-    account.set('iv', iv);
-    account.set('salt', salt);
-    account.set('data', Ambisafe.encrypt(
-        new Buffer(account.get('private_key'), 'hex'),
-        iv,
-        key
-    ));
-    return account;
-}
-
-Ambisafe.generateKeyPair = function () {
-    var eckey = bitcoin.ECKey.makeRandom();
-    return {
-        private_key: eckey.d.toHex(),
-        public_key: eckey.pub.toHex()
-    };
-};
-
-
-/**
- * Static method that signs a transaction.
- *
- * @param {object} tx unsigned transaction: {hex:'...', fee:'...', sighashes:['...', '...']}.
- * @param {string} private_key.
- * @return {object} signed transaction.
- */
-Ambisafe.signTransaction = function (tx, private_key) {
-    var keyPair, sign, buffer, d;
-
-    if (!(tx.sighashes) || !(tx.sighashes instanceof Array)) {
-        console.log('ERR: The "sighashes" attribute is required.');
-        return;
+    /**
+     * Static Method to generate rnadom salt key
+     */
+    static generateSalt() {
+        var rnd;
+        if (this.rng)
+            rnd = this.rng.randomBytes(16);
+        else
+            rnd = crypto.randomBytes(Math.ceil(16));
+        rnd[6] = (rnd[6] & 0x0f) | 0x40;
+        rnd[8] = (rnd[8] & 0x3f) | 0x80;
+        rnd = rnd.toString('hex').match(/(.{8})(.{4})(.{4})(.{4})(.{12})/);
+        rnd.shift();
+        return rnd.join('-');
     }
 
-    tx.user_signatures = [];
-    buffer = new Buffer(private_key, 'hex');
-    d = BigInteger.fromBuffer(buffer);
-    keyPair = new bitcoin.ECKey(d, true);
-
-    tx.sighashes.forEach(function (sighash) {
-        sign = keyPair.sign(new Buffer(sighash, 'hex')).toDER().toString('hex');
-        tx.user_signatures.push(sign);
-    });
-
-    return tx;
-};
-
-
-/**
- * Static method that generates random values
- *
- * @param {number} length An integer
- * @return {string} return random value
- */
-Ambisafe.generateRandomValue = function (length) {
-    var randomBytes;
-
-    if (!length) {
-        length = 256 / 16;
-    }
-
-    randomBytes = crypto.randomBytes(Math.ceil(length));
-    return randomBytes.toString('hex');
-};
-
-/**
- * Static method that derives a key from a password
- *
- * @param {string} password
- * @param {string} salt
- * @param {number} depth
- * @return {string} key
- */
-Ambisafe.deriveKey = function (password, salt, depth) {
-    var key;
-
-    if (!depth) {
-        depth = 1000;
-    }
-
-    key = crypto.pbkdf2Sync(password, salt, depth, 32, 'sha512');
-
-    return key.toString('hex');
-};
-
-/**
- * Static method that encrypts an input based on the Advanced Encryption Standard (AES)
- *
- * @param {string} cleardata
- * @param {string} iv
- * @param {string} cryptkey
- * @return {string} encrypted data
- */
-Ambisafe.encrypt = function (cleardata, iv, cryptkey) {
-    var encipher, encryptData, encodeEncryptData, bufferCryptKey;
-
-    bufferCryptKey = new Buffer(cryptkey, 'hex');
-
-    encipher = crypto.createCipheriv('aes-256-cbc', bufferCryptKey, new Buffer(iv, 'hex'));
-    encryptData  = encipher.update(cleardata, 'utf8', 'binary');
-
-    encryptData += encipher.final('binary');
-    encodeEncryptData = new Buffer(encryptData, 'binary').toString('hex');
-
-    return encodeEncryptData;
-};
-
-/**
- * Static method that decrypts an input based on the Advanced Encryption Standard (AES)
- *
- * @param {string} encryptdata
- * @param {string} iv
- * @param {string} cryptkey
- * @return {string} decrypted text
- */
-Ambisafe.decrypt = function (encryptdata, iv, cryptkey) {
-    var decipher, decoded, bufferCryptKey;
-
-    bufferCryptKey = new Buffer(cryptkey, 'hex');
-
-    decipher = crypto.createDecipheriv('aes-256-cbc', bufferCryptKey, new Buffer(iv, 'hex'));
-    decoded  = Buffer.concat([decipher.update(new Buffer(encryptdata, 'hex')), decipher.final()]);
-    return decoded;
-};
-
-/**
- * Static method that gets the SHA1 hash of a string
- *
- * @param {string} input
- * @return {string} SHA1 hash
- */
-Ambisafe.SHA1 = function (input) {
-    var shasum = crypto.createHash('sha1');
-
-    shasum.update(input);
-
-    return shasum.digest('hex');
-};
-
-/**
- * Defines the Account constructor.
- *
- * @param {object} container.
- * @param {string} password.
- * @return none.
- */
-Ambisafe.Account = function (container, password) {
-    var key, privateKey, property;
-
-    this.data = {};
-
-    for (property in container) {
-        if (container.hasOwnProperty(property)) {
-            this.set(property, container[property]);
+    /**
+     * Static method that creates an account and save it.
+     * This supposed to happen after user have filled registration form and clicked submit.
+     *
+     * @param {string} currency as string
+     * @param {string} password as string
+     * @param {string} salt as string
+     * @return {Ambisafe.Account} return the generated account object
+     */
+    static generateAccount (password, salt) {
+        const _salt = salt || this.generateSalt();
+        if (!password) {
+            throw Error('ERR: password are required');
         }
+
+        let key = this.deriveKey(password, _salt);
+
+        let account = new Account();
+        account.set('key', key);
+        account.set('salt', _salt);
+
+        var keyPair = this.generateKeyPair();
+        account.set('private_key', keyPair.private_key);
+        account.set('public_key', keyPair.public_key);
+        var iv = this.generateRandomValue(16);
+        account.set('iv', iv);
+
+        account.set('data', this.encrypt(
+            new Buffer(account.get('private_key'), 'hex'),
+            iv,
+            key
+        ));
+
+        return account;
+    };
+
+    static fromPrivateKey(privateKey, password, salt) {
+        const _salt = salt || this.generateSalt();
+        let key = this.deriveKey(password, _salt);
+        let account = new Account();
+        account.set('private_key', privateKey);
+        account.set('public_key', (new bitcoin.ECKey(BigInteger.fromBuffer(new Buffer(privateKey, 'hex')))).pub.toHex());
+        const iv = this.generateRandomValue(16);
+        account.set('iv', iv);
+        account.set('salt', _salt);
+        account.set('data', this.encrypt(
+            new Buffer(account.get('private_key'), 'hex'),
+            iv,
+            key
+        ));
+        return account;
     }
 
-    if (this.get('salt') && this.get('data') && this.get('iv') && password) {
-        key = Ambisafe.deriveKey(password, this.get('salt'));
-        this.set('key', key);
+    static generateKeyPair() {
+        var privateKey;
+        if (this.rng)
+            privateKey = this.rng.randomBytes(32).
+        else
+            privateKey = crypto.randomBytes(32)
+        var publicKey = secp256k1.publicKeyCreate(privateKey);
+        return {
+            private_key: privateKey.toString('hex'),
+            public_key: publicKey.toString('hex')
+        };
+    };
 
-        privateKey = Ambisafe.decrypt(
-            this.get('data'),
-            this.get('iv'),
-            this.get('key')
-        ).toString('hex');
 
-        this.set('private_key', privateKey);
-    }
-};
+    /**
+     * Static method that signs a transaction.
+     *
+     * @param {object} tx unsigned transaction: {hex:'...', fee:'...', sighashes:['...', '...']}.
+     * @param {string} private_key.
+     * @return {object} signed transaction.
+     */
+    static signTransaction(tx, private_key) {
 
-/**
- * Defines the instance data object used to store the Account data.
- */
-Ambisafe.Account.prototype.data = {};
+        if (!(tx.sighashes) || !(tx.sighashes instanceof Array)) {
+            console.log('ERR: The "sighashes" attribute is required.');
+            return;
+        }
 
-/**
- * Instance method that signs a transaction.
- *
- * @param {object} tx unsigned transaction: {hex:'...', fee:'...', sighashes:['...', '...']}.
- * @return {object} signed transaction.
- */
-Ambisafe.Account.prototype.signTransaction = function (tx) {
+        tx.user_signatures = [];
+        const buffer = new Buffer(private_key, 'hex');
+        const d = BigInteger.fromBuffer(buffer);
+        let keyPair = new bitcoin.ECKey(d, true);
 
-    var privateKey = this.get('private_key');
+        tx.sighashes.forEach(function (sighash) {
+            const sign = keyPair.sign(new Buffer(sighash, 'hex')).toDER().toString('hex');
+            tx.user_signatures.push(sign);
+        });
 
-    if (privateKey) {
-        return Ambisafe.signTransaction(tx, privateKey);
-    }
+        return tx;
+    };
 
-    console.log('ERR: The transaction was not signed. The "private_key" attribute is not defined');
-};
 
-/**
- * Instance method that set a new password
- *
- * @param {string} password
- * @return none.
- */
-Ambisafe.Account.prototype.setNewPassword = function (password) {
-    var curKey, curData,
-        newKey, newData,
-        privateKey;
+    /**
+     * Static method that generates random values
+     *
+     * @param {number} length An integer
+     * @return {string} return random value
+     */
+    static generateRandomValue(length) {
+        if (!length)
+            length = 32;
+        if (this.rng)
+            return this.rng.randomBytes(length).toString('hex');
+        else
+            return crypto.randomBytes(Math.ceil(length)).toString('hex');
+    };
 
-    if (!this.get('salt') || !this.get('data') || !this.get('iv')) {
-        console.log('ERR: The following attributes are required: salt, data and iv.');
-        return;
-    }
+    /**
+     * Static method that derives a key from a password
+     *
+     * @param {string} password
+     * @param {string} salt
+     * @param {number} depth
+     * @return {string} key
+     */
+    static deriveKey(password, salt, depth) {
+        if (!depth)
+            depth = 1000;
 
-    curKey = this.get('key');
-    curData = this.get('data');
+        const key = crypto.pbkdf2Sync(password, salt, depth, 32, 'sha512');
+        return key.toString('hex');
+    };
 
-    privateKey = Ambisafe.decrypt(curData, this.get('iv'), curKey);
+    /**
+     * Static method that encrypts an input based on the Advanced Encryption Standard (AES)
+     *
+     * @param {string} cleardata
+     * @param {string} iv
+     * @param {string} cryptkey
+     * @return {string} encrypted data
+     */
+    static encrypt(cleardata, iv, cryptkey) {
+        const bufferCryptKey = new Buffer(cryptkey, 'hex');
 
-    newKey = Ambisafe.deriveKey(password, this.get('salt'));
+        let encipher = crypto.createCipheriv('aes-256-cbc', bufferCryptKey, new Buffer(iv, 'hex'));
+        let encryptData  = encipher.update(cleardata, 'utf8', 'binary');
 
-    this.set('iv', Ambisafe.generateRandomValue(16));
-    newData = Ambisafe.encrypt(privateKey, this.get('iv'), newKey);
+        encryptData += encipher.final('binary');
+        return new Buffer(encryptData, 'binary').toString('hex');
+    };
 
-    this.set('data', newData);
-    this.set('key', newKey);
-    this.set('private_key', privateKey.toString('hex'));
-};
+    /**
+     * Static method that decrypts an input based on the Advanced Encryption Standard (AES)
+     *
+     * @param {string} encryptdata
+     * @param {string} iv
+     * @param {string} cryptkey
+     * @return {string} decrypted text
+     */
+    static decrypt(encryptdata, iv, cryptkey) {
 
-/**
- * Instance method that gets the value of an indicated attribute.
- *
- * @param {string} name attribute name.
- * @return {object} return the value of the indicated attribute.
- */
-Ambisafe.Account.prototype.get = function (name) {
-    return this.data[name];
-};
+        const bufferCryptKey = new Buffer(cryptkey, 'hex');
+        const decipher = crypto.createDecipheriv('aes-256-cbc', bufferCryptKey, new Buffer(iv, 'hex'));
 
-/**
- * Instance method that sets the value of an indicated attribute.
- *
- * @param {string} name attribute name.
- * @param {object} value attribute value.
- * @return none.
- */
-Ambisafe.Account.prototype.set = function (name, value) {
-    this.data[name] = value;
-};
+        return Buffer.concat([decipher.update(new Buffer(encryptdata, 'hex')), decipher.final()]);
+    };
 
-/**
- * Intance method that returns the Account's data in a JSON format
- *
- * @return {string} return the account data as string.
- */
-Ambisafe.Account.prototype.stringify = function () {
-    return JSON.stringify(this.data);
-};
+    /**
+     * Static method that gets the SHA1 hash of a string
+     *
+     * @param {string} input
+     * @return {string} SHA1 hash
+     */
+    static SHA1(input) {
+        return crypto.createHash('sha1').update(input).digest('hex');
+    };
 
-/**
- * Intance method that parse the Account's data
- *
- * @param {string} data return the account data as string
- * @return none.
- */
-Ambisafe.Account.prototype.parse = function (data) {
-    if (typeof data !== 'string') {
-        console.log('ERR: The account data to parse has to be string');
-        return;
-    }
-
-    this.data = JSON.parse(data);
-};
-
-/**
- * Intance method that get the Account's container as a Javascript object
- *
- * @return {object}
- */
-Ambisafe.Account.prototype.getContainer = function () {
-    var container = {};
-
-    container.public_key = this.get('public_key');
-    container.data = this.get('data');
-    container.salt = this.get('salt');
-    container.iv = this.get('iv');
-
-    return container;
-};
-
-/**
- * Intance method that get the Account's container as string
- *
- * @return {string}
- */
-Ambisafe.Account.prototype.getStringContainer = function () {
-    return JSON.stringify(this.getContainer());
-};
-
-/**
- * exports the created Ambisafe object.
- */
-var exports = module.exports = Ambisafe;
+}
