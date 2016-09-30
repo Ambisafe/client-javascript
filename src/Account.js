@@ -44,7 +44,7 @@ export default class Account {
         if (this.get('private_key'))
             return Ambisafe.signTransaction(tx, privateKey);
         else
-            console.log('ERR: The transaction was not signed. The "private_key" attribute is not defined');
+            throw new Error('ERR: The transaction was not signed. The "private_key" attribute is not defined');
     };
 
     /**
@@ -56,7 +56,7 @@ export default class Account {
     setNewPassword(password) {
 
         if (!this.get('salt') || !this.get('data') || !this.get('iv')) {
-            console.log('ERR: The following attributes are required: salt, data and iv.');
+            throw new Error('ERR: The following attributes are required: salt, data and iv.');
             return;
         }
 
@@ -113,7 +113,7 @@ export default class Account {
      */
     parse(data) {
         if (typeof data !== 'string') {
-            console.log('ERR: The account data to parse has to be string');
+            throw new Error('ERR: The account data to parse has to be string');
             return;
         }
 

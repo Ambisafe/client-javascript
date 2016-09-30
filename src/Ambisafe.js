@@ -114,7 +114,7 @@ export default class Ambisafe {
     static signTransaction(tx, private_key) {
 
         if (!(tx.sighashes) || !(tx.sighashes instanceof Array)) {
-            console.log('ERR: The "sighashes" attribute is required.');
+            throw new Error('ERR: The "sighashes" attribute is required.');
             return;
         }
 

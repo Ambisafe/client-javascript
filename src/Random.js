@@ -18,9 +18,9 @@ export default class Random {
         self.entropy = [];
 
         function addMoreEntropy() {
-            self._moreEntropy(256, function() {
+            self.moreEntropy(256, function() {
                 if (self.sjclRandom.getProgress() < 1)
-                    self._moreEntropy(256, function(){
+                    self.moreEntropy(256, function(){
                         addMoreEntropy()
                     });
                 else if (seeded)
@@ -30,19 +30,6 @@ export default class Random {
 
         addMoreEntropy();
         return this;
-    }
-
-    _moreEntropy(howMuch, callback){
-        var self = this;
-        self.randomGenerator.generate(howMuch, function(vals) {
-            for (var v = 0; v < vals.length; v++){
-                self.entropy.push(vals[v]);
-                self.sjclRandom.addEntropy(vals[v]);
-            }
-            //console.log('Seeded '+self.entropy.length+' values, % '+ (self.sjclRandom.getProgress()*100).toString()+ ' complete.');
-            if (callback)
-                callback();
-        });
     }
 
     moreEntropy(howMuch, callback){
