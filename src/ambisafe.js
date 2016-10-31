@@ -32,7 +32,8 @@
 var bitcoin = require('bitcoinjs-lib'),
     crypto = require('crypto'),
     BigInteger = require('bigi'),
-    uuid4 = require('uuid4');
+    uuid4 = require('uuid4'),
+    utils = require('./utils');
 
 /**
  * Defines the Ambisafe constructor.
@@ -106,13 +107,15 @@ Ambisafe.fromPrivateKey = function (privateKey, password, salt) {
         key
     ));
     return account;
-}
+};
 
 Ambisafe.generateKeyPair = function () {
-    var eckey = bitcoin.ECKey.makeRandom();
+    var eckey = bitcoin.ECKey.makeRandom(),
+        privateKey = utils.zpad(eckey.d.toHex(), 64),
+        publicKey = utils.zpad(eckey.pub.toHex(), 64);
     return {
-        private_key: eckey.d.toHex(),
-        public_key: eckey.pub.toHex()
+        private_key: privateKey,
+        public_key: publicKey
     };
 };
 
