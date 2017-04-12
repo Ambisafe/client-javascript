@@ -26,7 +26,7 @@
  * @date 07/20/2015
  */
 
-GridSampler = {};
+var GridSampler = {};
 
 GridSampler.checkAndNudgePoints = function(image, points) {
 	var width = qrcode.width;
@@ -1048,7 +1048,7 @@ function BitMatrixParser(bitMatrix) {
 }
 
 
-DataMask = {};
+var DataMask = {};
 
 DataMask.forReference = function(reference) {
 	if (reference < 0 || reference > 7) {
@@ -1567,7 +1567,7 @@ GF256.addOrSubtract = function(a, b) {
 };
 
 
-Decoder = {};
+var Decoder = {};
 Decoder.rsDecoder = new ReedSolomonDecoder(GF256.QR_CODE_FIELD);
 
 Decoder.correctErrors = function(codewordBytes, numDataCodewords) {

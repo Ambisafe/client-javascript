@@ -1,25 +1,30 @@
 {
-	"name": "ambisafe-client-javascript",
-	"main": "src/index.js",
-	"version": "0.11.4",
-	"dependencies": {
-		"bitcoinjs-lib": "1.5.7",
-		"crypto": "0.0.3",
-		"bigi": "1.4.1",
-		"uuid4": "1.0.0"
-	},
-	"devDependencies": {
-		"browserify": "^11.0.1",
-		"uglify-js": "^2.4.24",
-		"watchify": "^3.3.1",
-	  "mocha": "2.3.3",
-	  "sinon": "1.17.1"
-	},
-	"scripts": {
-		"build-debug": "browserify src/index.js -d --s Ambisafe > dist/ambisafe.js",
-		"build-min": "browserify src/index.js --s Ambisafe | uglifyjs -c > dist/ambisafe.min.js",
-		"build": "npm run build-debug && npm run build-min",
-		"watch": "watchify src/index.js -d --s Ambisafe -o dist/ambisafe.js -v",
-	  "test": "mocha"
-	}
+  "name": "ambisafe-client-javascript",
+  "main": "src/index.js",
+  "version": "0.12.0",
+  "dependencies": {
+    "bigi": "1.4.1",
+    "bitcoinjs-lib": "1.5.7",
+    "crypto": "0.0.3",
+    "uuid4": "1.0.0"
+  },
+  "devDependencies": {
+    "babel-cli": "6.24.1",
+    "babel-core": "6.24.1",
+    "babel-loader": "6.4.1",
+    "babel-plugin-add-module-exports": "0.2.1",
+    "babel-plugin-transform-object-assign": "6.22.0",
+    "babel-preset-es2015": "6.24.1",
+    "babelify": "7.3.0",
+    "json-loader": "0.5.4",
+    "mocha": "2.3.3",
+    "sinon": "1.17.1",
+    "uglifyify": "3.0.4",
+    "webpack": "1.14.0"
+  },
+  "scripts": {
+    "build": "babel src --out-dir dist && webpack --config webpack.config.js",
+    "build-min": "babel src --out-dir dist && webpack --config webpack-min.config.js",
+    "test": "mocha"
+  }
 }
