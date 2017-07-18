@@ -1,7 +1,7 @@
 {
   "name": "ambisafe-client-javascript",
   "main": "src/index.js",
-  "version": "0.12.0",
+  "version": "0.12.1",
   "dependencies": {
     "bigi": "1.4.1",
     "bitcoinjs-lib": "1.5.7",
