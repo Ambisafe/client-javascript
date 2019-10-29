@@ -7,6 +7,7 @@ const PATHS = {
 
 module.exports = {
     entry: PATHS.src,
+    mode: 'development',
     output: {
         path: PATHS.build,
         filename: "ambisafe.js",
@@ -14,23 +15,15 @@ module.exports = {
         libraryTarget: "var"
     },
     module: {
-        preLoaders: [
-            { test: /\.json/, loader: "json-loader" }
-        ],
-        loaders: [
+        rules: [
             {
                 test: /\.js/,
                 exclude: /node_modules\/(?!(browserify-sha3|rlp)\/).*/,
-                loader: "babel",
-                query: {
-                    presets: ['es2015'],
-                    plugins: ['transform-object-assign'],
-                }
+                loader: "babel-loader",
             }
         ]
     },
     node: {
       fs: "empty"
-    },
-    plugins: []
+    }
 };

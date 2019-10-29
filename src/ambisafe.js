@@ -97,7 +97,8 @@ Ambisafe.fromPrivateKey = function (privateKey, password, salt) {
     key = Ambisafe.deriveKey(password, salt);
     account = new Ambisafe.Account();
     account.set('private_key', privateKey);
-    account.set('public_key', (new bitcoin.ECKey(BigInteger.fromBuffer(new Buffer(privateKey, 'hex')))).pub.toHex());
+    account.set('public_key', bitcoin.ECPair.fromPrivateKey(Buffer.from(privateKey, 'hex')).publicKey.toString('hex'));
+
     iv = Ambisafe.generateRandomValue(16);
     account.set('iv', iv);
     account.set('salt', salt);
@@ -110,9 +111,9 @@ Ambisafe.fromPrivateKey = function (privateKey, password, salt) {
 };
 
 Ambisafe.generateKeyPair = function () {
-    var eckey = bitcoin.ECKey.makeRandom(),
-        privateKey = utils.zpad(eckey.d.toHex(), 64),
-        publicKey = utils.zpad(eckey.pub.toHex(), 64);
+    const eckey = bitcoin.ECPair.makeRandom();
+    const privateKey = eckey.privateKey.toString('hex');
+    const publicKey = eckey.publicKey.toString('hex');
     return {
         private_key: privateKey,
         public_key: publicKey
