@@ -1,5 +1,5 @@
 const path = require('path');
-const webpack = require('webpack');
+const TerserPlugin = require('terser-webpack-plugin');
 
 const PATHS = {
     src: path.join(__dirname, 'src', 'index.js'),
@@ -8,6 +8,7 @@ const PATHS = {
 
 module.exports = {
     entry: PATHS.src,
+    mode: 'production',
     output: {
         path: PATHS.build,
         filename: "ambisafe.min.js",
@@ -15,27 +16,26 @@ module.exports = {
         libraryTarget: "var"
     },
     module: {
-        preLoaders: [
-            { test: /\.json/, loader: "json-loader" }
-        ],
-        loaders: [
+        rules: [
             {
                 test: /\.js/,
                 exclude: /node_modules\/(?!(browserify-sha3|rlp)\/).*/,
-                loader: "babel",
-                query: {
-                    presets: ['es2015'],
-                    plugins: ['transform-object-assign'],
-                }
+                loader: "babel-loader",
             }
         ]
     },
     node: {
       fs: "empty"
     },
-    plugins: [
-      new webpack.optimize.DedupePlugin(),
-      new webpack.optimize.OccurenceOrderPlugin(),
-      new webpack.optimize.UglifyJsPlugin({ mangle: false, sourcemap: false }),
-    ]
+    optimization: {
+        minimizer: [
+            new TerserPlugin({
+                terserOptions: {
+                    output: {
+                        comments: false,
+                    },
+                },
+              }),
+        ]
+    }
 };
