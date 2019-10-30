@@ -57,6 +57,17 @@ describe('Ambisafe', function () {
             });
         }));
     });
+
+    it('should hash password', () => {
+        var password = 'test',
+            hashedPassword = Ambisafe.deriveKey(
+                password,
+                Ambisafe.SHA1(password),
+                2000
+            );
+
+        assert.equal(hashedPassword, 'e315febdd169b000d04b5813091c0ca7e976eb6e3d7561f3fa890fdfe28df943');
+      });
 });
 
 describe('Ambisafe.Account', function () {
