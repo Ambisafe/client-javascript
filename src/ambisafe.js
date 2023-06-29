@@ -32,7 +32,7 @@
 var bitcoin = require('bitcoinjs-lib'),
     crypto = require('crypto'),
     BigInteger = require('bigi'),
-    uuid4 = require('uuid4'),
+    { v4 } = require('uuid'),
     utils = require('./utils');
 
 /**
@@ -62,7 +62,7 @@ Ambisafe.generateAccount = function (currency, password, salt) {
         keyPair,
         iv;
 
-    salt = salt || uuid4();
+    salt = salt || v4();
 
     if (!password) {
         throw Error('ERR: password are required');
@@ -81,7 +81,7 @@ Ambisafe.generateAccount = function (currency, password, salt) {
     account.set('iv', iv);
 
     account.set('data', Ambisafe.encrypt(
-        new Buffer(account.get('private_key'), 'hex'),
+        Buffer.from(account.get('private_key'), 'hex'),
         iv,
         key
     ));
@@ -93,16 +93,16 @@ Ambisafe.fromPrivateKey = function (privateKey, password, salt) {
     var iv,
         key,
         account;
-    salt = salt || uuid4();
+    salt = salt || v4();
     key = Ambisafe.deriveKey(password, salt);
     account = new Ambisafe.Account();
     account.set('private_key', privateKey);
-    account.set('public_key', (new bitcoin.ECKey(BigInteger.fromBuffer(new Buffer(privateKey, 'hex')))).pub.toHex());
+    account.set('public_key', (new bitcoin.ECKey(BigInteger.fromBuffer(Buffer.from(privateKey, 'hex')))).pub.toHex());
     iv = Ambisafe.generateRandomValue(16);
     account.set('iv', iv);
     account.set('salt', salt);
     account.set('data', Ambisafe.encrypt(
-        new Buffer(account.get('private_key'), 'hex'),
+        Buffer.from(account.get('private_key'), 'hex'),
         iv,
         key
     ));
@@ -136,12 +136,12 @@ Ambisafe.signTransaction = function (tx, private_key) {
     }
 
     tx.user_signatures = [];
-    buffer = new Buffer(private_key, 'hex');
+    buffer = Buffer.from(private_key, 'hex');
     d = BigInteger.fromBuffer(buffer);
     keyPair = new bitcoin.ECKey(d, true);
 
     tx.sighashes.forEach(function (sighash) {
-        sign = keyPair.sign(new Buffer(sighash, 'hex')).toDER().toString('hex');
+        sign = keyPair.sign(Buffer.from(sighash, 'hex')).toDER().toString('hex');
         tx.user_signatures.push(sign);
     });
 
@@ -197,13 +197,13 @@ Ambisafe.deriveKey = function (password, salt, depth) {
 Ambisafe.encrypt = function (cleardata, iv, cryptkey) {
     var encipher, encryptData, encodeEncryptData, bufferCryptKey;
 
-    bufferCryptKey = new Buffer(cryptkey, 'hex');
+    bufferCryptKey = Buffer.from(cryptkey, 'hex');
 
-    encipher = crypto.createCipheriv('aes-256-cbc', bufferCryptKey, new Buffer(iv, 'hex'));
+    encipher = crypto.createCipheriv('aes-256-cbc', bufferCryptKey, Buffer.from(iv, 'hex'));
     encryptData  = encipher.update(cleardata, 'utf8', 'binary');
 
     encryptData += encipher.final('binary');
-    encodeEncryptData = new Buffer(encryptData, 'binary').toString('hex');
+    encodeEncryptData = Buffer.from(encryptData, 'binary').toString('hex');
 
     return encodeEncryptData;
 };
@@ -219,10 +219,10 @@ Ambisafe.encrypt = function (cleardata, iv, cryptkey) {
 Ambisafe.decrypt = function (encryptdata, iv, cryptkey) {
     var decipher, decoded, bufferCryptKey;
 
-    bufferCryptKey = new Buffer(cryptkey, 'hex');
+    bufferCryptKey = Buffer.from(cryptkey, 'hex');
 
-    decipher = crypto.createDecipheriv('aes-256-cbc', bufferCryptKey, new Buffer(iv, 'hex'));
-    decoded  = Buffer.concat([decipher.update(new Buffer(encryptdata, 'hex')), decipher.final()]);
+    decipher = crypto.createDecipheriv('aes-256-cbc', bufferCryptKey, Buffer.from(iv, 'hex'));
+    decoded  = Buffer.concat([decipher.update(Buffer.from(encryptdata, 'hex')), decipher.final()]);
     return decoded;
 };
 
