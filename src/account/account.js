@@ -31,9 +31,7 @@
 /**
  * This section defines the required libraries
  */
-var crypto = require('crypto'),
-    bitcoin = require('bitcoinjs-lib'),
-    Ambisafe = require('../ambisafe');
+var Ambisafe = require('../ambisafe');
 
 /**
  * Defines the Account constructor.
