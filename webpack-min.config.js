@@ -7,11 +7,15 @@ const PATHS = {
 
 module.exports = {
   entry: PATHS.src,
+  target: "web",
   output: {
     path: PATHS.build,
     filename: "ambisafe.min.js",
     library: "Ambisafe",
-    libraryTarget: "var",
+    libraryTarget: "umd",
+    libraryExport: "default",
+    umdNamedDefine: true,
+    globalObject: 'this',
   },
   optimization: {
     minimize: true
