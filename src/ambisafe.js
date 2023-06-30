@@ -136,7 +136,6 @@ Ambisafe.signTransaction = function (tx, private_key) {
 
     tx.user_signatures = [];
     buffer = Buffer.from(private_key, 'hex');
-    // d = BigInteger.fromBuffer(buffer);
     keyPair = bitcoin.ECPair.fromPrivateKey(buffer, { compressed: true });
 
     tx.sighashes.forEach(function (sighash) {
