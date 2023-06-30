@@ -6,6 +6,9 @@
     "bitcoinjs-lib": "5.1.6",
     "uuid": "9.0.0"
   },
+  "files": [
+    "dist"
+  ],
   "devDependencies": {
     "@babel/core": "^7.16.5",
     "babel-cli": "6.26.0",
