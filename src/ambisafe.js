@@ -111,7 +111,7 @@ Ambisafe.fromPrivateKey = function (privateKey, password, salt) {
 Ambisafe.generateKeyPair = function () {
     var eckey = bitcoin.ECPair.makeRandom(),
         privateKey = utils.zpad(eckey.privateKey.toString('hex'), 64),
-        publicKey = utils.zpad(eckey.publicKey.toString("hex"), 64);
+        publicKey = utils.zpad(eckey.publicKey.toString('hex'), 64);
     return {
         private_key: privateKey,
         public_key: publicKey
