@@ -48,7 +48,7 @@ describe('Ambisafe', function () {
     });
     describe('#generateKeyPair()', function () {
         it('should not cut leading zeroes from private key', sinon.test(function () {
-            var d = Buffer.from('00e1ba4622d55086e1741ecb3cd87a96349c73402752eb7d09964c5f38c8f107', "hex");
+            var d = Buffer.from('00e1ba4622d55086e1741ecb3cd87a96349c73402752eb7d09964c5f38c8f107', 'hex');
             this.stub(bitcoin.ECPair, 'makeRandom').returns(bitcoin.ECPair.fromPrivateKey(d));
             assert.deepEqual(Ambisafe.generateKeyPair(), {
                 public_key: "0354eb9796cbfdc6d068b001ea58d4679709b0895ce0b9b24c61a33f9bca696bfe",
