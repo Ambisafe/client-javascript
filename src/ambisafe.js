@@ -31,7 +31,6 @@
  */
 var bitcoin = require('bitcoinjs-lib'),
     crypto = require('crypto'),
-    BigInteger = require('bigi'),
     { v4 } = require('uuid'),
     utils = require('./utils');
 
@@ -97,7 +96,7 @@ Ambisafe.fromPrivateKey = function (privateKey, password, salt) {
     key = Ambisafe.deriveKey(password, salt);
     account = new Ambisafe.Account();
     account.set('private_key', privateKey);
-    account.set('public_key', (new bitcoin.ECKey(BigInteger.fromBuffer(Buffer.from(privateKey, 'hex')))).pub.toHex());
+    account.set('public_key', (bitcoin.ECPair.fromPrivateKey(Buffer.from(privateKey, 'hex'))).publicKey.toString('hex'));
     iv = Ambisafe.generateRandomValue(16);
     account.set('iv', iv);
     account.set('salt', salt);
@@ -110,9 +109,9 @@ Ambisafe.fromPrivateKey = function (privateKey, password, salt) {
 };
 
 Ambisafe.generateKeyPair = function () {
-    var eckey = bitcoin.ECKey.makeRandom(),
-        privateKey = utils.zpad(eckey.d.toHex(), 64),
-        publicKey = utils.zpad(eckey.pub.toHex(), 64);
+    var eckey = bitcoin.ECPair.makeRandom(),
+        privateKey = utils.zpad(eckey.privateKey.toString('hex'), 64),
+        publicKey = utils.zpad(eckey.publicKey.toString('hex'), 64);
     return {
         private_key: privateKey,
         public_key: publicKey
@@ -137,8 +136,7 @@ Ambisafe.signTransaction = function (tx, private_key) {
 
     tx.user_signatures = [];
     buffer = Buffer.from(private_key, 'hex');
-    d = BigInteger.fromBuffer(buffer);
-    keyPair = new bitcoin.ECKey(d, true);
+    keyPair = bitcoin.ECPair.fromPrivateKey(buffer, { compressed: true });
 
     tx.sighashes.forEach(function (sighash) {
         sign = keyPair.sign(Buffer.from(sighash, 'hex')).toDER().toString('hex');
